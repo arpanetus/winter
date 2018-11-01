@@ -4,25 +4,26 @@ import (
 	"github.com/steplems/winter/core"
 )
 
-type ApiRouter struct {
-	*core.Router
-}
+var (
+	cookieLogger = core.NewLogger("cookie")
 
-func (a *ApiRouter) Init() {
-	a.All("/", func(ctx *core.Context) {
-		ctx.JSON("Api router /api/")
+	apiRouter = core.NewRouter(func(r *core.Router) {
+		cookieLogger.Info("Executed when used by some other router")
+
+		r.Get("/", core.Sender("Some shit"))
 	})
-}
+)
 
 func main() {
 	server := core.NewServer(":5539")
 
+	server.Set("/api", apiRouter)
+
 	server.Get("/", func(ctx *core.Context) {
-		core.MainLogger.Info("Wow, what a fancy logger")
+		cookieLogger.Info("Wow, what a fancy logger")
 		ctx.JSON("I love cookies")
 	})
 
-	server.Set("/api", &ApiRouter{})
-
+	// Now checkout http://localhost:5539/ and /api/
 	server.Start()
 }

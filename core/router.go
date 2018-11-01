@@ -7,7 +7,14 @@ import (
 	"time"
 )
 
-func NewRouter() *Router {
+func NewRouter(init func(r *Router)) interface{} {
+	return &struct {
+		*Router
+		Init func(r *Router)
+	}{Init: init}
+}
+
+func newRouter() *Router {
 	return &Router{
 		mux: mux.NewRouter(),
 	}
@@ -55,13 +62,13 @@ func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 
 func (r *Router) Set(path string, router interface{}) {
 	routerPrefix := r.mux.PathPrefix(path).Subrouter()
-	newRouter := &Router{routerPrefix}
+	newPrefixedRouter := &Router{routerPrefix}
 
 	routerValue := reflect.ValueOf(router).Elem()
 	field := routerValue.FieldByName("Router")
 
 	if field.IsValid() {
-		field.Set(reflect.ValueOf(newRouter))
+		field.Set(reflect.ValueOf(newPrefixedRouter))
 	} else {
 		return
 	}
@@ -69,9 +76,16 @@ func (r *Router) Set(path string, router interface{}) {
 	routerType := reflect.TypeOf(router)
 	method, ok := routerType.MethodByName(router_init_func_name)
 	if !ok {
-		routerLogger.Warn("Missing Init method in router!")
+		simpleMethod := routerValue.FieldByName(router_init_func_name)
+
+		if simpleMethod != reflect.Zero(reflect.TypeOf(simpleMethod)).Interface() {
+			simpleMethod.Call([]reflect.Value{reflect.ValueOf(newPrefixedRouter)})
+		} else {
+			routerLogger.Warn("Missing Init method in router!")
+		}
 		return
 	}
+
 	method.Func.Call([]reflect.Value{reflect.ValueOf(router)})
 }
 
