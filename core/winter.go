@@ -54,7 +54,6 @@ type (
 	IServer interface {
 		Start()
 		StartTLS()
-		Set(handler http.Handler)
 	}
 
 	Server struct {
@@ -80,17 +79,30 @@ type (
 type (
 	IRouter interface {
 		GetHandler() *mux.Router
+
 		Set(path string, router interface{})
+		SetWebSocket(path string, wsRouter interface{})
+		SetHandler(path string, handler http.Handler)
+
 		All(path string, resolver Resolver)
 		Get(path string, resolver Resolver)
 		Put(path string, resolver Resolver)
 		Post(path string, resolver Resolver)
 		Delete(path string, resolver Resolver)
 		Handle(path string, resolver Resolver, methods ...string)
+
 		Use(resolver MiddlewareResolver)
 	}
 	Router struct {
 		mux *mux.Router
+	}
+)
+
+// ws.go
+type (
+	IWebSocketRouter interface {
+	}
+	WebSocketRouter struct {
 	}
 )
 
@@ -116,14 +128,14 @@ type (
 		Handler http.Handler
 	}
 
-	SuccessResponse struct {
-		Message string   	`json:"message"`
-		Data 	interface{} `emitempty,json:"data"`
-	}
-
 	Resolver func(ctx *Context)
-
 	MiddlewareResolver func(ctx *MiddlewareContext)
+)
+type (
+	IWebSocketContext interface {
+	}
+	WebSocketContext struct {
+	}
 )
 
 // error.go

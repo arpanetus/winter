@@ -15,7 +15,7 @@ var (
 )
 
 func main() {
-	server := core.NewServer(":5539")
+	server := core.NewServer(":5000")
 
 	server.Set("/api", apiRouter)
 

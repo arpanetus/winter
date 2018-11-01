@@ -60,6 +60,10 @@ func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 	})
 }
 
+func (r *Router) SetHandler(path string, handler http.Handler) {
+	r.mux.Handle(path, handler)
+}
+
 func (r *Router) Set(path string, router interface{}) {
 	routerPrefix := r.mux.PathPrefix(path).Subrouter()
 	newPrefixedRouter := &Router{routerPrefix}
@@ -87,6 +91,9 @@ func (r *Router) Set(path string, router interface{}) {
 	}
 
 	method.Func.Call([]reflect.Value{reflect.ValueOf(router)})
+}
+
+func (r *Router) SetWebSocket(path string, wsRouter interface{}) {
 }
 
 func (r *Router) resolver(resolver Resolver) func(res http.ResponseWriter, req *http.Request) {
