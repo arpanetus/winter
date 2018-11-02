@@ -9,7 +9,7 @@ import (
 
 func NewServer(addr string) *Server {
 	return &Server{
-		Router: NewRouter(),
+		Router: newRouter(),
 		Addr: addr,
 		Headers: ServerHeaders{
 			map[string]string{},
