@@ -14,22 +14,46 @@ func NewLogger(name string) *Logger {
 }
 
 func (l *Logger) Info(mess ...interface{}) {
-	l.printWithTag(tag_info, []int{36, 1}, mess...)
+	l.printWithTag(false, "", tag_info, []int{36, 1}, mess...)
+}
+
+func (l *Logger) Infof(format string, mess ...interface{}) {
+	l.printWithTag(true, format, tag_info, []int{36, 1}, mess...)
 }
 
 func (l *Logger) Warn(mess ...interface{}) {
-	l.printWithTag(tag_warn, []int{33, 1}, mess...)
+	l.printWithTag(false, "", tag_warn, []int{33, 1}, mess...)
+}
+
+func (l *Logger) Warnf(format string, mess ...interface{}) {
+	l.printWithTag(true, format, tag_warn, []int{33, 1}, mess...)
 }
 
 func (l *Logger) Err(mess ...interface{}) {
-	l.printWithTag(tag_error, []int{31, 1}, mess...)
+	l.printWithTag(false, "", tag_error, []int{31, 1}, mess...)
+}
+
+func (l *Logger) Errf(format string, mess ...interface{}) {
+	l.printWithTag(true, format, tag_error, []int{31, 1}, mess...)
+}
+
+func (l *Logger) Note(mess ...interface{}) {
+	l.printWithTag(false, "", tag_note, []int{34, 1}, mess...)
+}
+
+func (l *Logger) Notef(format string, mess ...interface{}) {
+	l.printWithTag(true, format, tag_note, []int{34, 1}, mess...)
 }
 
 func (l *Logger) Log(mess ...interface{}) {
-	l.log(mess...)
+	l.log(false, "", mess...)
 }
 
-func (l *Logger) log(mess ...interface{}) {
+func (l *Logger) Logf(format string, mess ...interface{}) {
+	l.log(true, format, mess...)
+}
+
+func (l *Logger) log(format bool, formatString string, mess ...interface{}) {
 	logTime := time.Now().Format("2006/01/02 15:04:05")
 
 	if runtime.GOOS != "windows" {
@@ -37,7 +61,12 @@ func (l *Logger) log(mess ...interface{}) {
 	}
 
 	fmt.Print(logTime, "  " + l.ansi(2), l.Name, " |  " + ansi_clear)
-	fmt.Println(mess...)
+	if format {
+		fmt.Printf(formatString, mess...)
+		fmt.Println()
+	} else {
+		fmt.Println(mess...)
+	}
 }
 
 func (l *Logger) ansi(codes ...int) string {
@@ -54,7 +83,7 @@ func (l *Logger) ansi(codes ...int) string {
 	return ansiSpaceCode
 }
 
-func (l *Logger) printWithTag(tag string, tagColor []int, mess ...interface{}) {
+func (l *Logger) printWithTag(format bool, formatStirng string, tag string, tagColor []int, mess ...interface{}) {
 	tagLog := "[" + tag + "]"
 
 	if runtime.GOOS != "windows" {
@@ -62,5 +91,5 @@ func (l *Logger) printWithTag(tag string, tagColor []int, mess ...interface{}) {
 	}
 
 	fmt.Print(tagLog, " ")
-	l.log(mess...)
+	l.log(format, formatStirng, mess...)
 }
