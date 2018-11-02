@@ -39,3 +39,6 @@ func main() {
 * Documentation
 * Winter CLI
 * MultipleProtocol/RPC Usage (WS, Twirp, gRPC, HTTP/2)
+
+# License
+MIT

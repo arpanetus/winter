@@ -14,6 +14,7 @@ const (
 	tag_info = "INFO"
 	tag_warn = "WARN"
 	tag_error = "ERR!"
+	tag_note = "NOTE"
 
 	cors = "Access-Control-Allow-"
 	cors_origin = cors + "Origin"
@@ -36,26 +37,12 @@ var (
 	routerLogger = NewLogger("router")
 )
 
-// logger.go
-type (
-	ILogger interface {
-		Log(mess ...interface{})
-		Err(mess ...interface{})
-		Info(mess ...interface{})
-		Warn(mess ...interface{})
-	}
-	Logger struct {
-		Name string
-	}
-)
-
 // server.go
 type (
 	IServer interface {
 		Start()
 		StartTLS()
 	}
-
 	Server struct {
 		*Router
 		Addr string
@@ -159,4 +146,23 @@ type (
 		Set(code int, err Error)
 	}
 	ErrorMap map[int]*Error
+)
+
+// logger.go
+type (
+	ILogger interface {
+		Log(mess ...interface{})
+		Logf(format string, mess ...interface{})
+		Err(mess ...interface{})
+		Errf(format string, mess ...interface{})
+		Info(mess ...interface{})
+		Infof(format string, mess ...interface{})
+		Warn(mess ...interface{})
+		Warnf(format string, mess ...interface{})
+		Note(mess ...interface{})
+		Notef(format string, mess ...interface{})
+	}
+	Logger struct {
+		Name string
+	}
 )
