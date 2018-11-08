@@ -95,6 +95,7 @@ type (
 	}
 	Router struct {
 		mux *mux.Router
+		Errors *ErrorMap
 	}
 )
 
@@ -105,6 +106,7 @@ type (
 		JSON(msg interface{})
 		Status(code int) *Context
 		SendError(err Error)
+		SendSuccess(message interface{})
 		SendResponse(status int, message interface{})
 	}
 	Context struct {
@@ -136,7 +138,7 @@ type (
 type (
 	IError interface {
 		Send(ctx *Context)
-		SetMessage(mess string)
+		SetMessage(mess interface{})
 		SetStatus(status int)
 	}
 	Error struct {
@@ -149,7 +151,7 @@ type (
 
 	IErrorMap interface {
 		Get(code int) *Error
-		Set(code int, err Error)
+		Set(code int, err *Error)
 	}
 	ErrorMap map[int]*Error
 )

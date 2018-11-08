@@ -12,7 +12,8 @@ var (
 
 		r.Get("/", core.Sender("Some shit"))
 
-		r.Get("/simple", func(ctx *core.Context) {
+		r.Get("/simple", func(ctx *core.Context) core.Response {
+			return core.NewSuccessResponse("Cool")
 		})
 	})
 )
@@ -22,9 +23,12 @@ func main() {
 
 	server.Set("/api", apiRouter)
 
-	server.Get("/", func(ctx *core.Context) {
+	server.Get("/", func(ctx *core.Context) core.Response {
 		cookieLogger.Info("Wow, what a fancy logger")
+
 		ctx.JSON("I love cookies")
+
+		return core.NullResponse()
 	})
 
 	// Now checkout http://localhost:5539/ and /api/

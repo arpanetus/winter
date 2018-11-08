@@ -29,7 +29,8 @@ func Trace() (string, int, string) {
 }
 
 func Sender(json interface{}) Resolver {
-	return func(ctx *Context) {
+	return func(ctx *Context) Response {
 		ctx.JSON(json)
+		return NullResponse()
 	}
 }

@@ -6,6 +6,31 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func NullResponse() Response {
+	return Response{}
+}
+
+func NewResponse(status int, message interface{}) Response {
+	return Response{
+		Status: status,
+		Message: message,
+	}
+}
+
+func NewSuccessResponse(message interface{}) Response {
+	return Response{
+		Status: 200,
+		Message: message,
+	}
+}
+
+func NewErrorResponse(err *Error) Response {
+	return Response{
+		Status: err.Status,
+		Message: err.Message,
+	}
+}
+
 func (c *Context) Send(msg []byte) {
 	c.Response.Write(msg)
 }
@@ -25,7 +50,7 @@ func (c *Context) Header(key, val string) {
 
 func (c *Context) SendError(err Error) {
 	if err == (Error{}) {
-		c.Status(err.Status).JSON(Error{
+		c.SendResponse(err.Status, Error{
 			&Response{
 				500,
 				"Unknown error",
@@ -34,10 +59,18 @@ func (c *Context) SendError(err Error) {
 		return
 	}
 
-	c.Status(err.Status).JSON(err)
+	c.SendResponse(err.Status, err)
 }
 
-func (c *Context) SendNewResponse() {
+func (c *Context) SendSuccess(message interface{}) {
+	c.SendResponse(200, message)
+}
+
+func (c *Context) SendResponse(status int, message interface{}) {
+	c.Status(status).JSON(Response{
+		status,
+		message,
+	})
 }
 
 func (c *Context) GetParam(key string) (string, bool) {

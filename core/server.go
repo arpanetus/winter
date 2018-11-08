@@ -49,9 +49,12 @@ func (s *Server) serverInit() {
 }
 
 func (s *Server) processRouterByDefault() *mux.Router {
-	s.Use(s.corsMiddleware)
-	s.Use(s.headerSetterMiddleware)
-
+	if len(s.CORS.headerMap) > 0 {
+		s.Use(s.corsMiddleware)
+	}
+	if len(s.Headers.headerMap) > 0 {
+		s.Use(s.headerSetterMiddleware)
+	}
 	if s.Debug {
 		s.Use(s.loggingMiddleware)
 	}
@@ -61,7 +64,8 @@ func (s *Server) processRouterByDefault() *mux.Router {
 
 func (s *Server) loggingMiddleware(ctx *MiddlewareContext) {
 	ctx.Next()
-	requestLogger.Info(ctx.Request.Method, ctx.Request.RequestURI, ctx.TrackTime())
+	requestLogger.Info(ctx.Request.Method, ctx.Request.RequestURI,
+		"ms -", float32(ctx.TrackTime().Nanoseconds()) / float32(1000000))
 }
 
 func (s *Server) headerSetterMiddleware(ctx *MiddlewareContext) {

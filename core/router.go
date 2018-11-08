@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 	"reflect"
@@ -17,6 +18,7 @@ func NewRouter(init func(r *Router)) interface{} {
 func NewCoreRouter() *Router {
 	return &Router{
 		mux: mux.NewRouter(),
+		Errors: NewErrorMap(),
 	}
 }
 
@@ -62,7 +64,7 @@ func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 
 func (r *Router) Set(path string, router interface{}) {
 	routerPrefix := r.mux.PathPrefix(path).Subrouter()
-	newPrefixedRouter := &Router{routerPrefix}
+	newPrefixedRouter := &Router{routerPrefix, NewErrorMap()}
 
 	routerValue := reflect.ValueOf(router).Elem()
 	field := routerValue.FieldByName("Router")
@@ -97,7 +99,12 @@ func (r *Router) resolver(resolver Resolver) func(res http.ResponseWriter, req *
 	return func(res http.ResponseWriter, req *http.Request) {
 		profiler := TrackTime()
 
-		resolver(r.getContext(res, req, profiler))
+		response := resolver(r.getContext(res, req, profiler))
+
+		if response != (Response{}) {
+			res.WriteHeader(response.Status)
+			json.NewEncoder(res).Encode(response)
+		}
 	}
 }
 
