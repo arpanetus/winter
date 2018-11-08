@@ -11,6 +11,9 @@ var (
 		cookieLogger.Info("Executed when used by some other router")
 
 		r.Get("/", core.Sender("Some shit"))
+
+		r.Get("/simple", func(ctx *core.Context) {
+		})
 	})
 )
 

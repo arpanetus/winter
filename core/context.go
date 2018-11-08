@@ -24,16 +24,25 @@ func (c *Context) Header(key, val string) {
 }
 
 func (c *Context) SendError(err Error) {
+	if err == (Error{}) {
+		c.Status(err.Status).JSON(Error{
+			&Response{
+				500,
+				"Unknown error",
+			},
+		})
+		return
+	}
+
 	c.Status(err.Status).JSON(err)
 }
 
-func (c *Context) GetParam(key string) string {
-	param, ok := c.GetParams()[key]
-	if !ok {
-		return ""
-	}
+func (c *Context) SendNewResponse() {
+}
 
-	return param
+func (c *Context) GetParam(key string) (string, bool) {
+	param, ok := c.GetParams()[key]
+	return param, ok
 }
 
 func (c *Context) GetParams() map[string]string {

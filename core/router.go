@@ -14,7 +14,7 @@ func NewRouter(init func(r *Router)) interface{} {
 	}{Init: init}
 }
 
-func newRouter() *Router {
+func NewCoreRouter() *Router {
 	return &Router{
 		mux: mux.NewRouter(),
 	}
@@ -87,6 +87,10 @@ func (r *Router) Set(path string, router interface{}) {
 	}
 
 	method.Func.Call([]reflect.Value{reflect.ValueOf(router)})
+}
+
+func (r *Router) SetHandler(path string, handler http.Handler) {
+	r.mux.Handle(path, handler)
 }
 
 func (r *Router) resolver(resolver Resolver) func(res http.ResponseWriter, req *http.Request) {

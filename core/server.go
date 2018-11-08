@@ -9,8 +9,9 @@ import (
 
 func NewServer(addr string) *Server {
 	return &Server{
-		Router: newRouter(),
+		Router: NewCoreRouter(),
 		Addr: addr,
+		Debug: false,
 		Headers: ServerHeaders{
 			map[string]string{},
 		},
@@ -50,7 +51,10 @@ func (s *Server) serverInit() {
 func (s *Server) processRouterByDefault() *mux.Router {
 	s.Use(s.corsMiddleware)
 	s.Use(s.headerSetterMiddleware)
-	s.Use(s.loggingMiddleware)
+
+	if s.Debug {
+		s.Use(s.loggingMiddleware)
+	}
 
 	return s.GetHandler()
 }
