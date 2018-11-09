@@ -8,9 +8,9 @@ You can find some examples in /winter/examples dir
 Simple usage:
 ```
 server := core.NewServer(":<addr>")
-server.Get("/", func(ctx *core.Context) {
+server.Get("/", func(ctx *core.Context) core.Response {
     core.MainLogger.Info("Wow, what a fancy logger")
-    ctx.JSON("I love cookies")
+    return core.NewSuccessResponse("I love cookies")
 })
 server.Start()
 ```
@@ -33,6 +33,18 @@ func main() {
     server.Set("/api", &SuperRouter{})
     server.Start()
 }
+```
+
+Creating router more simple way:
+```
+var superRouter = core.NewRouter(func(r *core.Router) {
+    r.All("/", core.Sender("Simple Router")))
+})
+
+// ...
+
+// Set it as always
+server.Set("/api", superRouter)
 ```
 
 # TODO

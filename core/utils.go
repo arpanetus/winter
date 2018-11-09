@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func LogTime(cb func(t time.Duration)) func() {
+func GetTrackedTime(cb func(t time.Duration)) func() {
 	start := time.Now()
 	return func() {
 		cb(time.Since(start))
@@ -29,7 +29,8 @@ func Trace() (string, int, string) {
 }
 
 func Sender(json interface{}) Resolver {
-	return func(ctx *Context) {
+	return func(ctx *Context) Response {
 		ctx.JSON(json)
+		return NullResponse()
 	}
 }
