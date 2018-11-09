@@ -41,14 +41,27 @@ var (
 type (
 	IServer interface {
 		Start()
-		StartTLS()
-		Set(handler http.Handler)
+		StartTLS(certPath, keyPath string)
+		OnStart(onStart func(addr string))
+		OnError(onErr func(err error))
+		OnShutdown(onShutdown func(err error))
 	}
 	Server struct {
 		*Router
+
 		Addr string
+
+		Debug bool
+		GracefulShutdown bool
+
 		Headers ServerHeaders
 		CORS ServerCORSHeaders
+
+		NativeServer *http.Server
+
+		onStart func(addr string)
+		onError func(err error)
+		onShutdown func(err error)
 	}
 
 	ServerConfig struct {
@@ -67,17 +80,22 @@ type (
 type (
 	IRouter interface {
 		GetHandler() *mux.Router
+
 		Set(path string, router interface{})
+		SetHandler(path string, handler http.Handler)
+
 		All(path string, resolver Resolver)
 		Get(path string, resolver Resolver)
 		Put(path string, resolver Resolver)
 		Post(path string, resolver Resolver)
 		Delete(path string, resolver Resolver)
 		Handle(path string, resolver Resolver, methods ...string)
+
 		Use(resolver MiddlewareResolver)
 	}
 	Router struct {
 		mux *mux.Router
+		Errors *ErrorMap
 	}
 )
 
@@ -87,6 +105,9 @@ type (
 		Send(msg []byte)
 		JSON(msg interface{})
 		Status(code int) *Context
+		SendError(err Error)
+		SendSuccess(message interface{})
+		SendResponse(status int, message interface{})
 	}
 	Context struct {
 		Response http.ResponseWriter
@@ -100,15 +121,15 @@ type (
 	}
 	MiddlewareContext struct {
 		*Context
-		Handler http.Handler
+		handler http.Handler
 	}
 
-	SuccessResponse struct {
-		Message string   	`json:"message"`
-		Data 	interface{} `emitempty,json:"data"`
+	Response struct {
+		Status 	int 		`json:"status,omitempty"`
+		Message interface{} `json:"message,omitempty"`
 	}
 
-	Resolver func(ctx *Context)
+	Resolver func(ctx *Context) Response
 
 	MiddlewareResolver func(ctx *MiddlewareContext)
 )
@@ -117,12 +138,11 @@ type (
 type (
 	IError interface {
 		Send(ctx *Context)
-		SetMessage(mess string)
+		SetMessage(mess interface{})
 		SetStatus(status int)
 	}
 	Error struct {
-		Status  int    `json:"status"`
-		Message string `json:"message"`
+		*Response
 	}
 	BindError struct {
 		Code int
@@ -131,7 +151,7 @@ type (
 
 	IErrorMap interface {
 		Get(code int) *Error
-		Set(code int, err Error)
+		Set(code int, err *Error)
 	}
 	ErrorMap map[int]*Error
 )
