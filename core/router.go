@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 	"reflect"
@@ -14,9 +15,10 @@ func NewRouter(init func(r *Router)) interface{} {
 	}{Init: init}
 }
 
-func newRouter() *Router {
+func NewCoreRouter() *Router {
 	return &Router{
 		mux: mux.NewRouter(),
+		Errors: NewErrorMap(),
 	}
 }
 
@@ -60,13 +62,9 @@ func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 	})
 }
 
-func (r *Router) SetHandler(path string, handler http.Handler) {
-	r.mux.Handle(path, handler)
-}
-
 func (r *Router) Set(path string, router interface{}) {
 	routerPrefix := r.mux.PathPrefix(path).Subrouter()
-	newPrefixedRouter := &Router{routerPrefix}
+	newPrefixedRouter := &Router{routerPrefix, NewErrorMap()}
 
 	routerValue := reflect.ValueOf(router).Elem()
 	field := routerValue.FieldByName("Router")
@@ -93,14 +91,20 @@ func (r *Router) Set(path string, router interface{}) {
 	method.Func.Call([]reflect.Value{reflect.ValueOf(router)})
 }
 
-func (r *Router) SetWebSocket(path string, wsRouter interface{}) {
+func (r *Router) SetHandler(path string, handler http.Handler) {
+	r.mux.Handle(path, handler)
 }
 
 func (r *Router) resolver(resolver Resolver) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		profiler := TrackTime()
 
-		resolver(r.getContext(res, req, profiler))
+		response := resolver(r.getContext(res, req, profiler))
+
+		if response != (Response{}) {
+			res.WriteHeader(response.Status)
+			json.NewEncoder(res).Encode(response)
+		}
 	}
 }
 
@@ -115,6 +119,6 @@ func (r *Router) getContext(res http.ResponseWriter, req *http.Request, executio
 func (r *Router) getMiddlewareContext(res http.ResponseWriter, req *http.Request, handler http.Handler, executionTracker func() time.Duration) *MiddlewareContext {
 	return &MiddlewareContext{
 		Context: r.getContext(res, req, executionTracker),
-		Handler: handler,
+		handler: handler,
 	}
 }
