@@ -1,8 +1,10 @@
 package core
 
 import (
+	"bufio"
 	"github.com/gorilla/mux"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -24,6 +26,8 @@ const (
 
 	router_init_func_name = "Init"
 
+	bad_os = "windows"
+
 	winter_logo = " __     __     __     __   __     ______   ______     ______   \n" +
 		"/\\ \\  _ \\ \\   /\\ \\   /\\ \"-.\\ \\   /\\__  _\\ /\\  ___\\   /\\  == \\  \n" +
 		"\\ \\ \\/ \".\\ \\  \\ \\ \\  \\ \\ \\-.  \\  \\/_/\\ \\/ \\ \\  __\\   \\ \\  __<  \n" +
@@ -33,8 +37,8 @@ const (
 
 var (
 	MainLogger = NewLogger("main")
-	requestLogger = NewLogger("request")
-	routerLogger = NewLogger("router")
+	RequestLogger = NewLogger("request")
+	RouterLogger = NewLogger("router")
 )
 
 // server.go
@@ -42,6 +46,7 @@ type (
 	IServer interface {
 		Start()
 		StartTLS(certPath, keyPath string)
+
 		OnStart(onStart func(addr string))
 		OnError(onErr func(err error))
 		OnShutdown(onShutdown func(err error))
@@ -177,5 +182,12 @@ type (
 	}
 	Logger struct {
 		Name string
+		logIntoFile bool
+		logFile *os.File
+
+		fileWriter *bufio.Writer
+		writer func(a ...interface{}) (n int, err error)
+		writerf func(format string, a ...interface{}) (n int, err error)
+		writerln func(a ...interface{}) (n int, err error)
 	}
 )

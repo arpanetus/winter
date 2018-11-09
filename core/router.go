@@ -83,7 +83,7 @@ func (r *Router) Set(path string, router interface{}) {
 		if simpleMethod != reflect.Zero(reflect.TypeOf(simpleMethod)).Interface() {
 			simpleMethod.Call([]reflect.Value{reflect.ValueOf(newPrefixedRouter)})
 		} else {
-			routerLogger.Warn("Missing Init method in router!")
+			RouterLogger.Warn("Missing Init method in router!")
 		}
 		return
 	}

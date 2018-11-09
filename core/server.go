@@ -119,7 +119,7 @@ func (s *Server) processRouterByDefault() *mux.Router {
 
 func (s *Server) loggingMiddleware(ctx *MiddlewareContext) {
 	ctx.Next()
-	requestLogger.Info(ctx.Request.Method, ctx.Request.RequestURI,
+	RequestLogger.Info(ctx.Request.Method, ctx.Request.RequestURI,
 		"ms -", float32(ctx.TrackTime().Nanoseconds()) / float32(1000000))
 }
 
