@@ -1,10 +1,14 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"time"
 )
 
 func NewServer(addr string) *Server {
@@ -12,6 +16,10 @@ func NewServer(addr string) *Server {
 		Router: NewCoreRouter(),
 		Addr: addr,
 		Debug: false,
+		GracefulShutdown: false,
+		NativeServer: &http.Server{
+			Addr: addr,
+		},
 		Headers: ServerHeaders{
 			map[string]string{},
 		},
@@ -20,32 +28,79 @@ func NewServer(addr string) *Server {
 				map[string]string{},
 			},
 		},
+		onError: func(err error) {
+			MainLogger.Err(err)
+		},
+		onStart: func(addr string) {
+			fmt.Println(winter_logo)
+			MainLogger.Info("Your server is running on " + addr)
+		},
+		onShutdown: func(err error) {
+			if err != nil {
+				MainLogger.Err("Server shutdown with error", err)
+				return
+			}
+			MainLogger.Warn("Server shutdown")
+		},
 	}
+}
+
+func (s *Server) OnStart(onStart func(addr string)) {
+	s.onStart = onStart
+}
+
+func (s *Server) OnError(onErr func(err error)) {
+	s.onError = onErr
+}
+
+func (s *Server) OnShutdown(onShutdown func(err error)) {
+	s.onShutdown = onShutdown
 }
 
 func (s *Server) Start() {
-	s.serverInit()
+	s.NativeServer.Handler = s.processRouterByDefault()
 
-	srv := &http.Server{
-		Addr: s.Addr,
-		Handler: s.processRouterByDefault(),
+	if s.GracefulShutdown {
+		s.gracefulShutdown(false, "", "")
+	} else {
+		s.start(false, "", "")
 	}
-	srv.ListenAndServe()
 }
 
 func (s *Server) StartTLS(certPath string, keyPath string) {
-	s.serverInit()
+	s.NativeServer.Handler = s.processRouterByDefault()
 
-	srv := &http.Server{
-		Addr: s.Addr,
-		Handler: s.processRouterByDefault(),
+	if s.GracefulShutdown {
+		s.gracefulShutdown(true, certPath, keyPath)
+	} else {
+		s.start(true, certPath, keyPath)
 	}
-	srv.ListenAndServeTLS(certPath, keyPath)
 }
 
-func (s *Server) serverInit() {
-	fmt.Println(winter_logo)
-	MainLogger.Info("Your server is running on " + s.Addr)
+func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	go s.start(useTLS, certPath, keyPath)
+
+	<-stop
+
+	ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
+
+	s.onShutdown(s.NativeServer.Shutdown(ctx))
+}
+
+func (s *Server) start(useTLS bool, certPath, keyPath string) {
+	s.onStart(s.Addr)
+	if useTLS {
+		if err := s.NativeServer.ListenAndServeTLS(certPath, keyPath); err != nil {
+			s.onError(err)
+		}
+	} else {
+		if err := s.NativeServer.ListenAndServe(); err != nil {
+			s.onError(err)
+		}
+	}
 }
 
 func (s *Server) processRouterByDefault() *mux.Router {

@@ -53,15 +53,27 @@ type (
 type (
 	IServer interface {
 		Start()
-		StartTLS()
-		Set(handler http.Handler)
+		StartTLS(certPath, keyPath string)
+		OnStart(onStart func(addr string))
+		OnError(onErr func(err error))
+		OnShutdown(onShutdown func(err error))
 	}
 	Server struct {
 		*Router
+
 		Addr string
+
 		Debug bool
+		GracefulShutdown bool
+
 		Headers ServerHeaders
 		CORS ServerCORSHeaders
+
+		NativeServer *http.Server
+
+		onStart func(addr string)
+		onError func(err error)
+		onShutdown func(err error)
 	}
 
 	ServerConfig struct {
@@ -121,7 +133,7 @@ type (
 	}
 	MiddlewareContext struct {
 		*Context
-		Handler http.Handler
+		handler http.Handler
 	}
 
 	Response struct {

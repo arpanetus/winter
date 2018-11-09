@@ -100,5 +100,5 @@ func (c *Context) GetBody(body interface{}) error {
 }
 
 func (m *MiddlewareContext) Next() {
-	m.Handler.ServeHTTP(m.Response, m.Request)
+	m.handler.ServeHTTP(m.Response, m.Request)
 }
