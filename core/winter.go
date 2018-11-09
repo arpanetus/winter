@@ -105,6 +105,11 @@ type (
 		Send(msg []byte)
 		JSON(msg interface{})
 		Status(code int) *Context
+
+		GetParams() map[string]string
+		GetParam(key string) (string, bool)
+		GetBody(body interface{}) error
+
 		SendError(err Error)
 		SendSuccess(message interface{})
 		SendResponse(status int, message interface{})
