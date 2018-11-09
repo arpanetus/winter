@@ -119,6 +119,6 @@ func (r *Router) getContext(res http.ResponseWriter, req *http.Request, executio
 func (r *Router) getMiddlewareContext(res http.ResponseWriter, req *http.Request, handler http.Handler, executionTracker func() time.Duration) *MiddlewareContext {
 	return &MiddlewareContext{
 		Context: r.getContext(res, req, executionTracker),
-		Handler: handler,
+		handler: handler,
 	}
 }

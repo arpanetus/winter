@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func LogTime(cb func(t time.Duration)) func() {
+func GetTrackedTime(cb func(t time.Duration)) func() {
 	start := time.Now()
 	return func() {
 		cb(time.Since(start))
