@@ -63,8 +63,6 @@ func main() {
 	server.Set("/api", apiRouter)
 
 	server.Get("/", func(ctx *core.Context) core.Response {
-		cookieLogger.Info("Wow, what a fancy logger")
-
 		// Asynchronously sends a message in json formats
 		ctx.JSON("I love cookies")
 

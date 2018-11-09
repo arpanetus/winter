@@ -98,7 +98,7 @@ func (e *Error) SetStatus(status int) {
 func (e *ErrorMap) Get(code int) *Error {
 	err, ok := (*e)[code]
 	if !ok {
-		routerLogger.Warn("Missin error with code " + strconv.Itoa(code))
+		RouterLogger.Warn("Missing error with code " + strconv.Itoa(code))
 		return &Error{}
 	}
 	return err
