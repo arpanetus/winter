@@ -26,7 +26,6 @@ var HTTPErrors = getHTTPErrorMap(
 	http.StatusRequestedRangeNotSatisfiable,
 	http.StatusExpectationFailed,
 	http.StatusTeapot,
-	http.StatusMisdirectedRequest,
 	http.StatusUnprocessableEntity,
 	http.StatusLocked,
 	http.StatusFailedDependency,
