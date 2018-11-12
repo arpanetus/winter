@@ -83,8 +83,8 @@ func (s *Server) StartTLS(certPath string, keyPath string) {
 	}
 }
 
-func (s *Server) SetRootRouter(router *Router) {
-	s.Router = router
+func (s *Server) SetRootRouter(router interface{}) {
+	s.Set("", router)
 }
 
 func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {

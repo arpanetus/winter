@@ -3,6 +3,7 @@ package core
 import (
 	"bufio"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"os"
 	"time"
@@ -36,9 +37,10 @@ const (
 )
 
 var (
-	MainLogger = NewLogger("main")
-	RequestLogger = NewLogger("request")
-	RouterLogger = NewLogger("router")
+	MainLogger 			= NewLogger("main")
+	RequestLogger 		= NewLogger("request")
+	RouterLogger 		= NewLogger("router")
+	WebSocketLogger 	= NewLogger("ws")
 )
 
 // server.go
@@ -46,7 +48,7 @@ type (
 	IServer interface {
 		Start()
 		StartTLS(certPath, keyPath string)
-		SetRootRouter(router *Router)
+		SetRootRouter(router interface{})
 
 		OnStart(onStart func(addr string))
 		OnError(onErr func(err error))
@@ -68,9 +70,6 @@ type (
 		onStart func(addr string)
 		onError func(err error)
 		onShutdown func(err error)
-	}
-
-	ServerConfig struct {
 	}
 
 	ServerHeaders struct {
@@ -96,6 +95,7 @@ type (
 		Post(path string, resolver Resolver)
 		Delete(path string, resolver Resolver)
 		Handle(path string, resolver Resolver, methods ...string)
+		HandleWebSocket(path string, ws *WebSocket)
 
 		Use(resolver MiddlewareResolver)
 	}
@@ -165,6 +165,63 @@ type (
 		Set(code int, err *Error)
 	}
 	ErrorMap map[int]*Error
+)
+
+
+// ws.go
+type (
+	IWebSocket interface {
+	}
+	WebSocket struct {
+		Resolver 	WebSocketResolver
+		Upgrader 	*websocket.Upgrader
+	}
+
+	WinterSocketResolver func(socket *Socket)
+	WebSocketResolver func(conn *Connection)
+)
+
+type (
+	ISocket interface {
+		On(event string, resolver SocketResolver)
+		Send(messageType int, message []byte)
+		JSON(json interface{})
+	}
+	Socket struct {
+		OnCloseError func(err error)
+		OnUnexpectedCloseError func(err error)
+
+		conn   *Connection
+		events map[string]*SocketResolver
+	}
+
+	EventMessage struct {
+		Event 	string 		`json:"event"`
+		Payload interface{} `json:"payload"`
+	}
+
+	SocketResolver func(data interface{})
+)
+
+type (
+	IConnection interface {
+	}
+	Connection struct {
+		Conn 		*websocket.Conn
+		Message 	chan *Message
+		CloseError 	chan error
+		UnexpectedCloseError chan error
+
+		CloseErrorCodes		 		[]int
+		UnexpectedCloseErrorCodes 	[]int
+	}
+
+	IMessage interface {
+	}
+	Message struct {
+		Type 	int
+		Value 	[]byte
+	}
 )
 
 // logger.go
