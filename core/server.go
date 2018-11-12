@@ -117,24 +117,25 @@ func (s *Server) processRouterByDefault() *mux.Router {
 	return s.GetHandler()
 }
 
-func (s *Server) loggingMiddleware(ctx *MiddlewareContext) {
+func (s *Server) loggingMiddleware(ctx *MiddlewareContext) Response {
 	ctx.Next()
 	RequestLogger.Info(ctx.Request.Method, ctx.Request.RequestURI,
 		"ms -", float32(ctx.TrackTime().Nanoseconds()) / float32(1000000))
+	return NullResponse()
 }
 
-func (s *Server) headerSetterMiddleware(ctx *MiddlewareContext) {
+func (s *Server) headerSetterMiddleware(ctx *MiddlewareContext) Response {
 	for key, value := range s.Headers.GetMap() {
 		ctx.Response.Header().Set(key, value)
 	}
-	ctx.Next()
+	return ctx.NewNext()
 }
 
-func (s *Server) corsMiddleware(ctx *MiddlewareContext) {
+func (s *Server) corsMiddleware(ctx *MiddlewareContext) Response {
 	for key, value := range s.CORS.GetMap() {
 		ctx.Response.Header().Set(key, value)
 	}
-	ctx.Next()
+	return ctx.NewNext()
 }
 
 func (s *ServerHeaders) Add(key, value string) {

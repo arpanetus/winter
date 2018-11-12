@@ -110,12 +110,12 @@ type (
 		Send(msg []byte)
 		JSON(msg interface{})
 		Status(code int) *Context
+		SendError(err *Error)
 
 		GetParams() map[string]string
 		GetParam(key string) (string, bool)
 		GetBody(body interface{}) error
 
-		SendError(err Error)
 		SendSuccess(message interface{})
 		SendResponse(status int, message interface{})
 	}
@@ -128,6 +128,7 @@ type (
 	IMiddlewareContext interface {
 		IContext
 		Next()
+		NewNext() Response
 	}
 	MiddlewareContext struct {
 		*Context
@@ -140,8 +141,7 @@ type (
 	}
 
 	Resolver func(ctx *Context) Response
-
-	MiddlewareResolver func(ctx *MiddlewareContext)
+	MiddlewareResolver func(ctx *MiddlewareContext) Response
 )
 
 // error.go

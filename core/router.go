@@ -57,7 +57,16 @@ func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 	r.mux.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			profiler := TrackTime()
-			middlewareResolver(r.getMiddlewareContext(res, req, handler, profiler))
+			response := middlewareResolver(r.getMiddlewareContext(res, req, handler, profiler))
+			if response == (Response{}) {
+				return
+			}
+			if response.Status == http.StatusContinue {
+				handler.ServeHTTP(res, req)
+			} else {
+				res.WriteHeader(response.Status)
+				json.NewEncoder(res).Encode(response)
+			}
 		})
 	})
 }
