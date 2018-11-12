@@ -48,7 +48,7 @@ func (c *Context) Header(key, val string) {
 	c.Response.Header().Set(key, val)
 }
 
-func (c *Context) SendError(err Error) {
+func (c *Context) SendError(err *Error) {
 	if err == (Error{}) {
 		c.SendResponse(err.Status, Error{
 			&Response{

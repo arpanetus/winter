@@ -110,7 +110,7 @@ type (
 		Send(msg []byte)
 		JSON(msg interface{})
 		Status(code int) *Context
-		SendError(err Error)
+		SendError(err *Error)
 		SendSuccess(message interface{})
 		SendResponse(status int, message interface{})
 	}
