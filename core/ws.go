@@ -17,6 +17,19 @@ func NewWebSocket(resolver WebSocketResolver, upgrader ...*websocket.Upgrader) *
 	}
 }
 
+func NewWebSocketClient(url string, requestHeader http.Header) *Connection {
+	conn, _, err := websocket.DefaultDialer.Dial(url, requestHeader)
+	if err != nil {
+		WebSocketLogger.Err("Couldn't connect to a websocket:", err)
+		return &Connection{}
+	}
+
+	ws := WebSocket{}
+	ws.Resolver = func(conn *Connection) {}
+
+	return ws.dialer(conn)
+}
+
 func NewMessage(messageType int, message []byte) *Message {
 	return &Message{
 		Type: messageType,
@@ -26,23 +39,35 @@ func NewMessage(messageType int, message []byte) *Message {
 
 func WinterSocket(resolver WinterSocketResolver) WebSocketResolver {
 	return func(conn *Connection) {
-		socket := &Socket{
-			conn: conn,
-			events: map[string]*SocketResolver{},
-			OnCloseError: func(err error) {},
-			OnUnexpectedCloseError: func(err error) {},
-		}
-
+		socket := newSocket(conn)
 		resolver(socket)
+		winterChanSelect(conn, socket)
+	}
+}
 
-		select {
-		case message := <-conn.Message:
-			callEvent(socket, message)
-		case err := <-conn.CloseError:
-			socket.OnCloseError(err)
-		case err := <-conn.UnexpectedCloseError:
-			socket.OnUnexpectedCloseError(err)
-		}
+func WinterSocketClient(conn *Connection) *Socket {
+	socket := newSocket(conn)
+	go winterChanSelect(conn, socket)
+	return socket
+}
+
+func newSocket(conn *Connection) *Socket {
+	return &Socket{
+		conn: conn,
+		events: map[string]*SocketResolver{},
+		OnCloseError: func(err error) {},
+		OnUnexpectedCloseError: func(err error) {},
+	}
+}
+
+func winterChanSelect(conn *Connection, socket *Socket) {
+	select {
+	case message := <-conn.Message:
+		callEvent(socket, message)
+	case err := <-conn.CloseError:
+		socket.OnCloseError(err)
+	case err := <-conn.UnexpectedCloseError:
+		socket.OnUnexpectedCloseError(err)
 	}
 }
 
@@ -64,12 +89,19 @@ func (w *Socket) On(event string, resolver SocketResolver) {
 	w.events[event] = &resolver
 }
 
-func (w *Socket) Send(messageType int, message []byte) {
-	w.conn.Conn.WriteMessage(messageType, message)
+func (w *Socket) Emit(event string, data ...interface{}) {
+	w.conn.Conn.WriteJSON(EventMessage{
+		Event: event,
+		Payload: data[0],
+	})
 }
 
-func (w *Socket) JSON(json interface{}) {
-	w.conn.Conn.WriteJSON(json)
+func (c *Connection) Send(messageType int, message []byte) {
+	c.Conn.WriteMessage(messageType, message)
+}
+
+func (c *Connection) JSON(json interface{}) {
+	c.Conn.WriteJSON(json)
 }
 
 func (w *WebSocket) resolver(res http.ResponseWriter, req *http.Request) {
@@ -82,9 +114,7 @@ func (w *WebSocket) resolver(res http.ResponseWriter, req *http.Request) {
 	w.dialer(conn)
 }
 
-func (w *WebSocket) dialer(conn *websocket.Conn) {
-	defer conn.Close()
-
+func (w *WebSocket) dialer(conn *websocket.Conn) *Connection {
 	messageChan := make(chan *Message)
 	closeErrorChan := make(chan error)
 	unexpectedErrorChan := make(chan error)
@@ -97,18 +127,22 @@ func (w *WebSocket) dialer(conn *websocket.Conn) {
 	}
 
 	go w.Resolver(connection)
-
-	for {
-		mt, message, err := conn.ReadMessage()
-		if err != nil {
-			if websocket.IsCloseError(err, connection.UnexpectedCloseErrorCodes...) {
-				closeErrorChan <- err
-			} else if websocket.IsUnexpectedCloseError(err, connection.CloseErrorCodes...) {
-				unexpectedErrorChan <- err
+	go func() {
+		defer conn.Close()
+		for {
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				if websocket.IsCloseError(err, connection.UnexpectedCloseErrorCodes...) {
+					closeErrorChan <- err
+				} else if websocket.IsUnexpectedCloseError(err, connection.CloseErrorCodes...) {
+					unexpectedErrorChan <- err
+				}
+				break
 			}
-			break
-		}
 
-		messageChan <- NewMessage(mt, message)
-	}
+			messageChan <- NewMessage(mt, message)
+		}
+	}()
+
+	return connection
 }

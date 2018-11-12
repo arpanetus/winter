@@ -12,5 +12,6 @@ var rootRouter = core.NewRouter(func(r *core.Router) {
 func main() {
 	server := core.NewServer(":5549")
 	server.SetRootRouter(rootRouter)
+
 	server.Start()
 }
