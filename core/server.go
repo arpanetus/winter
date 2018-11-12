@@ -28,21 +28,27 @@ func NewServer(addr string) *Server {
 				map[string]string{},
 			},
 		},
-		onError: func(err error) {
-			MainLogger.Err(err)
-		},
-		onStart: func(addr string) {
-			fmt.Println(winter_logo)
-			MainLogger.Info("Your server is running on " + addr)
-		},
-		onShutdown: func(err error) {
-			if err != nil {
-				MainLogger.Err("Server shutdown with error", err)
-				return
-			}
-			MainLogger.Warn("Server shutdown")
-		},
+		onError: defaultOnError,
+		onStart: defaultOnStart,
+		onShutdown: defaultOnShutdown,
 	}
+}
+
+func defaultOnError(err error)  {
+	MainLogger.Err("Server closed with error:", err)
+}
+
+func defaultOnStart(addr string)  {
+	MainLogger.Info("Your server is running on " + addr)
+	fmt.Println(winter_logo)
+}
+
+func defaultOnShutdown(err error)  {
+	if err != nil {
+		MainLogger.Err("Server shutdown with error", err)
+		return
+	}
+	MainLogger.Warn("Server is shutting down")
 }
 
 func (s *Server) OnStart(onStart func(addr string)) {
@@ -75,6 +81,10 @@ func (s *Server) StartTLS(certPath string, keyPath string) {
 	} else {
 		s.start(true, certPath, keyPath)
 	}
+}
+
+func (s *Server) SetRootRouter(router *Router) {
+	s.Router = router
 }
 
 func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {

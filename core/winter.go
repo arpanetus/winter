@@ -46,6 +46,7 @@ type (
 	IServer interface {
 		Start()
 		StartTLS(certPath, keyPath string)
+		SetRootRouter(router *Router)
 
 		OnStart(onStart func(addr string))
 		OnError(onErr func(err error))
@@ -110,12 +111,12 @@ type (
 		Send(msg []byte)
 		JSON(msg interface{})
 		Status(code int) *Context
-		SendError(err *Error)
 
 		GetParams() map[string]string
 		GetParam(key string) (string, bool)
 		GetBody(body interface{}) error
 
+		SendError(err *Error)
 		SendSuccess(message interface{})
 		SendResponse(status int, message interface{})
 	}
