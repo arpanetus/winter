@@ -123,6 +123,7 @@ type (
 	IMiddlewareContext interface {
 		IContext
 		Next()
+		NewNext() Response
 	}
 	MiddlewareContext struct {
 		*Context
@@ -135,8 +136,7 @@ type (
 	}
 
 	Resolver func(ctx *Context) Response
-
-	MiddlewareResolver func(ctx *MiddlewareContext)
+	MiddlewareResolver func(ctx *MiddlewareContext) Response
 )
 
 // error.go

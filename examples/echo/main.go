@@ -15,6 +15,13 @@ var (
 	apiRouter = core.NewRouter(func(r *core.Router) {
 		cookieLogger.Info("Executed when used by some other router")
 
+		// Middlewares looks just like a resolver. The only difference is that it must return ctx.NewNext() response
+		// or execute ctx.Next() with NullResponse() to handle next resolver.
+		r.Use(func(ctx *core.MiddlewareContext) core.Response {
+			cookieLogger.Info("Middleware called")
+			return ctx.NewNext()
+		})
+
 		// Create your own errors attached to a router or create new ErrorMap
 		r.Errors.Set(1, core.NewError(http.StatusInternalServerError, "This route is not working right now"))
 

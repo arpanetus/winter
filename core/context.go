@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 func NullResponse() Response {
@@ -49,7 +50,7 @@ func (c *Context) Header(key, val string) {
 }
 
 func (c *Context) SendError(err *Error) {
-	if err == (Error{}) {
+	if err == (&Error{}) {
 		c.SendResponse(err.Status, Error{
 			&Response{
 				500,
@@ -99,6 +100,11 @@ func (c *Context) GetBody(body interface{}) error {
 	return nil
 }
 
+
 func (m *MiddlewareContext) Next() {
 	m.handler.ServeHTTP(m.Response, m.Request)
+}
+
+func (m *MiddlewareContext) NewNext() Response {
+	return NewResponse(http.StatusContinue, "")
 }
