@@ -208,6 +208,7 @@ type (
 	}
 	Connection struct {
 		Conn 		*websocket.Conn
+		Open		chan *websocket.Conn
 		Message 	chan *Message
 		CloseError 	chan error
 		UnexpectedCloseError chan error

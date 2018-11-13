@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+func NewWinterSocket(resolver WinterSocketResolver, upgrader ...*websocket.Upgrader) *WebSocket {
+	return NewWebSocket(WinterSocket(resolver), upgrader...)
+}
+
 func NewWebSocket(resolver WebSocketResolver, upgrader ...*websocket.Upgrader) *WebSocket {
 	defaultUpgrader := &websocket.Upgrader{}
 	if len(upgrader) > 0 {
@@ -85,12 +89,14 @@ func (w *WebSocket) resolver(res http.ResponseWriter, req *http.Request) {
 func (w *WebSocket) dialer(conn *websocket.Conn) {
 	defer conn.Close()
 
+	open := make(chan *websocket.Conn)
 	messageChan := make(chan *Message)
 	closeErrorChan := make(chan error)
 	unexpectedErrorChan := make(chan error)
 
 	connection := &Connection{
 		Conn: conn,
+		Open: open,
 		Message: messageChan,
 		CloseError: closeErrorChan,
 		UnexpectedCloseError: unexpectedErrorChan,
