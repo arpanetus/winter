@@ -5,13 +5,11 @@ import (
 	"github.com/steplems/winter/examples/multiproto/ws"
 )
 
-var rootRouter = core.NewRouter(func(r *core.Router) {
-	r.HandleWebSocket("/ws", ws.SimpleWebSocket)
-})
-
 func main() {
-	server := core.NewServer(":5549")
-	server.SetRootRouter(rootRouter)
+	server := core.NewServer(":5548")
+	server.GracefulShutdown = true
+
+	server.HandleWebSocket("/ws", ws.SimpleWebSocket)
 
 	server.Start()
 }

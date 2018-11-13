@@ -190,13 +190,13 @@ type (
 type (
 	ISocket interface {
 		On(event string, resolver SocketResolver)
+		Emit(event string, data ...interface{})
+		Close(onClose func(err error))
 	}
 	Socket struct {
-		OnCloseError func(err error)
-		OnUnexpectedCloseError func(err error)
-
-		conn   *Connection
-		events map[string]*SocketResolver
+		conn   			*Connection
+		events 			map[string]*SocketResolver
+		onClose 		func(err error)
 	}
 
 	EventMessage struct {
@@ -214,8 +214,8 @@ type (
 	}
 	Connection struct {
 		Conn 		*websocket.Conn
-		Open		chan *websocket.Conn
 		Message 	chan *Message
+		Close		chan error
 		CloseError 	chan error
 		UnexpectedCloseError chan error
 
