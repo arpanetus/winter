@@ -8,10 +8,7 @@ import (
 )
 
 func NewRouter(init func(r *Router)) interface{} {
-	return &struct {
-		*Router
-		Init func(r *Router)
-	}{Init: init}
+	return &SimpleRouter{Init: init}
 }
 
 func NewCoreRouter() *Router {

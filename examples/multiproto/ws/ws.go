@@ -1,12 +1,12 @@
 package ws
 
-import (
-	"github.com/steplems/winter/core"
-)
+import "github.com/steplems/winter/core"
 
-var SimpleWebSocket = core.NewWebSocket(core.WinterSocket(func(socket *core.Socket) {
-	socket.On("message", func(data interface{}) {
-		core.WebSocketLogger.Info(data)
-		socket.JSON("Socket response")
+var (
+	SimpleWebSocket = core.NewWinterSocket(func(socket *core.Socket) {
+		socket.On("message", func(data interface{}) {
+			core.WebSocketLogger.Info(data)
+			socket.Emit("mess", "Socket response")
+		})
 	})
-}))
+)

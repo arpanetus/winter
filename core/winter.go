@@ -103,6 +103,11 @@ type (
 		mux *mux.Router
 		Errors *ErrorMap
 	}
+
+	SimpleRouter struct {
+		*Router
+		Init func(r *Router)
+	}
 )
 
 // context.go
@@ -171,6 +176,7 @@ type (
 // ws.go
 type (
 	IWebSocket interface {
+		GetHandlerFunc() http.HandlerFunc
 	}
 	WebSocket struct {
 		Resolver 	WebSocketResolver
@@ -184,8 +190,6 @@ type (
 type (
 	ISocket interface {
 		On(event string, resolver SocketResolver)
-		Send(messageType int, message []byte)
-		JSON(json interface{})
 	}
 	Socket struct {
 		OnCloseError func(err error)
@@ -205,6 +209,8 @@ type (
 
 type (
 	IConnection interface {
+		Send(messageType int, message []byte)
+		JSON(json interface{})
 	}
 	Connection struct {
 		Conn 		*websocket.Conn
