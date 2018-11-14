@@ -8,15 +8,17 @@ import (
 )
 
 func NewRouter(init func(r *Router)) interface{} {
-	return &struct {
-		*Router
-		Init func(r *Router)
-	}{Init: init}
+	return &SimpleRouter{Init: init}
 }
 
-func newRouter() *Router {
+func NewCoreRouter() *Router {
+	router := mux.NewRouter()
+	router.MethodNotAllowedHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusMethodNotAllowed))))
+	router.NotFoundHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusNotFound))))
+
 	return &Router{
-		mux: mux.NewRouter(),
+		mux: router,
+		Errors: NewErrorMap(),
 	}
 }
 
@@ -51,18 +53,30 @@ func (r *Router) Handle(path string, resolver Resolver, methods ...string) {
 	}
 }
 
+func (r *Router) HandleWebSocket(path string, ws *WebSocket) {
+	r.mux.HandleFunc(path, ws.resolver)
+}
+
 func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 	r.mux.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			profiler := TrackTime()
-			middlewareResolver(r.getMiddlewareContext(res, req, handler, profiler))
+			response := middlewareResolver(r.getMiddlewareContext(res, req, handler, profiler))
+			if response == (Response{}) {
+				return
+			}
+			if response.Status == http.StatusContinue {
+				handler.ServeHTTP(res, req)
+			} else {
+				SendResponse(response)(res, req)
+			}
 		})
 	})
 }
 
 func (r *Router) Set(path string, router interface{}) {
 	routerPrefix := r.mux.PathPrefix(path).Subrouter()
-	newPrefixedRouter := &Router{routerPrefix}
+	newPrefixedRouter := &Router{routerPrefix, NewErrorMap()}
 
 	routerValue := reflect.ValueOf(router).Elem()
 	field := routerValue.FieldByName("Router")
@@ -81,7 +95,7 @@ func (r *Router) Set(path string, router interface{}) {
 		if simpleMethod != reflect.Zero(reflect.TypeOf(simpleMethod)).Interface() {
 			simpleMethod.Call([]reflect.Value{reflect.ValueOf(newPrefixedRouter)})
 		} else {
-			routerLogger.Warn("Missing Init method in router!")
+			RouterLogger.Warn("Missing Init method in router!")
 		}
 		return
 	}
@@ -89,11 +103,19 @@ func (r *Router) Set(path string, router interface{}) {
 	method.Func.Call([]reflect.Value{reflect.ValueOf(router)})
 }
 
+func (r *Router) SetHandler(path string, handler http.Handler) {
+	r.mux.Handle(path, handler)
+}
+
 func (r *Router) resolver(resolver Resolver) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		profiler := TrackTime()
 
-		resolver(r.getContext(res, req, profiler))
+		response := resolver(r.getContext(res, req, profiler))
+
+		if response != (Response{}) {
+			SendResponse(response)(res, req)
+		}
 	}
 }
 
@@ -108,6 +130,6 @@ func (r *Router) getContext(res http.ResponseWriter, req *http.Request, executio
 func (r *Router) getMiddlewareContext(res http.ResponseWriter, req *http.Request, handler http.Handler, executionTracker func() time.Duration) *MiddlewareContext {
 	return &MiddlewareContext{
 		Context: r.getContext(res, req, executionTracker),
-		Handler: handler,
+		handler: handler,
 	}
 }

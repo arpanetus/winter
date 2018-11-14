@@ -1,11 +1,12 @@
 package core
 
 import (
-	"runtime"
+	"encoding/json"
+	"net/http"
 	"time"
 )
 
-func LogTime(cb func(t time.Duration)) func() {
+func GetTrackedTime(cb func(t time.Duration)) func() {
 	start := time.Now()
 	return func() {
 		cb(time.Since(start))
@@ -19,17 +20,16 @@ func TrackTime() func() time.Duration {
 	}
 }
 
-func Trace() (string, int, string) {
-	pc := make([]uintptr, 10)
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	file, line := f.FileLine(pc[0])
-
-	return file, line, f.Name()
+func Sender(json interface{}) Resolver {
+	return func(ctx *Context) Response {
+		ctx.JSON(json)
+		return NullResponse()
+	}
 }
 
-func Sender(json interface{}) Resolver {
-	return func(ctx *Context) {
-		ctx.JSON(json)
+func SendResponse(response Response) func(res http.ResponseWriter, req *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(response.Status)
+		json.NewEncoder(res).Encode(response)
 	}
 }

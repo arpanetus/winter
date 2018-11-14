@@ -4,7 +4,33 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"net/http"
 )
+
+func NullResponse() Response {
+	return Response{}
+}
+
+func NewResponse(status int, message interface{}) Response {
+	return Response{
+		Status: status,
+		Message: message,
+	}
+}
+
+func NewSuccessResponse(message interface{}) Response {
+	return Response{
+		Status: 200,
+		Message: message,
+	}
+}
+
+func NewErrorResponse(err *Error) Response {
+	return Response{
+		Status: err.Status,
+		Message: err.Message,
+	}
+}
 
 func (c *Context) Send(msg []byte) {
 	c.Response.Write(msg)
@@ -23,17 +49,34 @@ func (c *Context) Header(key, val string) {
 	c.Response.Header().Set(key, val)
 }
 
-func (c *Context) SendError(err Error) {
-	c.Status(err.Status).JSON(err)
-}
-
-func (c *Context) GetParam(key string) string {
-	param, ok := c.GetParams()[key]
-	if !ok {
-		return ""
+func (c *Context) SendError(err *Error) {
+	if err == (&Error{}) {
+		c.SendResponse(err.Status, Error{
+			&Response{
+				500,
+				"Unknown error",
+			},
+		})
+		return
 	}
 
-	return param
+	c.SendResponse(err.Status, err)
+}
+
+func (c *Context) SendSuccess(message interface{}) {
+	c.SendResponse(200, message)
+}
+
+func (c *Context) SendResponse(status int, message interface{}) {
+	c.Status(status).JSON(Response{
+		status,
+		message,
+	})
+}
+
+func (c *Context) GetParam(key string) (string, bool) {
+	param, ok := c.GetParams()[key]
+	return param, ok
 }
 
 func (c *Context) GetParams() map[string]string {
@@ -57,6 +100,11 @@ func (c *Context) GetBody(body interface{}) error {
 	return nil
 }
 
+
 func (m *MiddlewareContext) Next() {
-	m.Handler.ServeHTTP(m.Response, m.Request)
+	m.handler.ServeHTTP(m.Response, m.Request)
+}
+
+func (m *MiddlewareContext) NewNext() Response {
+	return NewResponse(http.StatusContinue, "")
 }

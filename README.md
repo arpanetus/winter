@@ -1,6 +1,13 @@
 # Winter Framework
 Winter is framework made for developing scalable web applications.
 
+# Other libraries
+This framework uses other libraries such as:
+* [gorilla/mux](https://github.com/gorilla/mux)
+* [gorilla/websocket](https://github.com/gorilla/websocket)
+
+***Many thanks to the creator of these libs!***
+
 # Examples
 You can find some examples in /winter/examples dir
 
@@ -8,9 +15,9 @@ You can find some examples in /winter/examples dir
 Simple usage:
 ```
 server := core.NewServer(":<addr>")
-server.Get("/", func(ctx *core.Context) {
+server.Get("/", func(ctx *core.Context) core.Response {
     core.MainLogger.Info("Wow, what a fancy logger")
-    ctx.JSON("I love cookies")
+    return core.NewSuccessResponse("I love cookies")
 })
 server.Start()
 ```
@@ -35,7 +42,22 @@ func main() {
 }
 ```
 
+Creating router more simple way:
+```
+var superRouter = core.NewRouter(func(r *core.Router) {
+    r.All("/", core.Sender("Simple Router")))
+})
+
+// ...
+
+// Set it as always
+server.Set("/api", superRouter)
+```
+
 # TODO
 * Documentation
 * Winter CLI
 * MultipleProtocol/RPC Usage (WS, Twirp, gRPC, HTTP/2)
+
+# License
+MIT
