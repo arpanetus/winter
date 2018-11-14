@@ -52,7 +52,7 @@ type (
 
 		OnStart(onStart func(addr string))
 		OnError(onErr func(err error))
-		OnShutdown(onShutdown func(err error))
+		OnShutdown(onShutdown func(signal string))
 	}
 	Server struct {
 		*Router
@@ -69,7 +69,7 @@ type (
 
 		onStart func(addr string)
 		onError func(err error)
-		onShutdown func(err error)
+		onShutdown func(signal string)
 	}
 
 	ServerHeaders struct {
@@ -191,11 +191,13 @@ type (
 	ISocket interface {
 		On(event string, resolver SocketResolver)
 		Emit(event string, data ...interface{})
+		Open(onOpen func(addr string))
 		Close(onClose func(err error))
 	}
 	Socket struct {
 		conn   			*Connection
 		events 			map[string]*SocketResolver
+		onOpen			func(addr string)
 		onClose 		func(err error)
 	}
 
@@ -215,6 +217,7 @@ type (
 	Connection struct {
 		Conn 		*websocket.Conn
 		Message 	chan *Message
+		Open		chan string
 		Close		chan error
 		CloseError 	chan error
 		UnexpectedCloseError chan error

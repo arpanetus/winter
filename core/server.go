@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
@@ -40,15 +39,11 @@ func defaultOnError(err error)  {
 
 func defaultOnStart(addr string)  {
 	MainLogger.Info("Your server is running on " + addr)
-	fmt.Println(winter_logo)
+	println(winter_logo)
 }
 
-func defaultOnShutdown(err error)  {
-	if err != nil {
-		MainLogger.Err("Server shutdown with error", err)
-		return
-	}
-	MainLogger.Warn("Server is shutting down")
+func defaultOnShutdown(signal string)  {
+	MainLogger.Warn("Server is shutting down with signal:", signal)
 }
 
 func (s *Server) OnStart(onStart func(addr string)) {
@@ -59,7 +54,7 @@ func (s *Server) OnError(onErr func(err error)) {
 	s.onError = onErr
 }
 
-func (s *Server) OnShutdown(onShutdown func(err error)) {
+func (s *Server) OnShutdown(onShutdown func(signal string)) {
 	s.onShutdown = onShutdown
 }
 
@@ -93,11 +88,11 @@ func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {
 
 	go s.start(useTLS, certPath, keyPath)
 
-	<-stop
+	s.onShutdown((<-stop).String())
 
 	ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
 
-	s.onShutdown(s.NativeServer.Shutdown(ctx))
+	s.NativeServer.Shutdown(ctx)
 }
 
 func (s *Server) start(useTLS bool, certPath, keyPath string) {
