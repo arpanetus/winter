@@ -3,38 +3,21 @@ package main
 import (
 	"github.com/steplems/winter/core"
 	"github.com/steplems/winter/examples/multiproto/ws"
-	"time"
 )
 
 var (
-	addr = "127.0.0.1:5548"
-	log = core.NewLogger("multiproto")
+	log = core.NewLogger("example")
+	addr = "localhost:5549"
+	server = core.NewServer(addr)
 )
 
-func socketClient() {
-	socket := core.NewWinterSocketClient("ws://" + addr + "/ws", nil)
-	socket.Open(func(addr string) {
-		log.Info("Connected to the server on", addr)
-
-		socket.Emit("message", "Data from client")
-
-		socket.On("message", func(data interface{}) {
-			log.Info("Data from server:", data)
-		})
-	})
-}
-
 func main() {
-	server := core.NewServer(addr)
-
 	server.GracefulShutdown = true
-	server.Debug = true
-	server.HandleWebSocket("/ws", ws.SimpleWebSocket)
+	server.HandleWebSocket("/ws", ws.SocketServer)
 
-	go func() {
-		time.Sleep(time.Second * 3)
-		socketClient()
-	}()
+	server.OnStart(func(addr string) {
+		core.NewWebSocketClient("ws://" + addr + "/ws", nil, ws.SocketClient)
+	})
 
 	server.Start()
 }

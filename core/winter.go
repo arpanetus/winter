@@ -29,6 +29,8 @@ const (
 
 	bad_os = "windows"
 
+	main_room_path	= "main"
+
 	winter_logo = " __     __     __     __   __     ______   ______     ______   \n" +
 		"/\\ \\  _ \\ \\   /\\ \\   /\\ \"-.\\ \\   /\\__  _\\ /\\  ___\\   /\\  == \\  \n" +
 		"\\ \\ \\/ \".\\ \\  \\ \\ \\  \\ \\ \\-.  \\  \\/_/\\ \\/ \\ \\  __\\   \\ \\  __<  \n" +
@@ -176,62 +178,50 @@ type (
 // ws.go
 type (
 	IWebSocket interface {
+		GetResolver() Resolver
 		GetHandlerFunc() http.HandlerFunc
 	}
 	WebSocket struct {
-		Resolver 	WebSocketResolver
-		Upgrader 	*websocket.Upgrader
+		Headers	 	http.Header
+		upgrader 	websocket.Upgrader
+		resolver	WebSocketResolver
+		connection  *Connection
 	}
 
-	WinterSocketResolver func(socket *Socket)
 	WebSocketResolver func(conn *Connection)
-)
 
-type (
-	ISocket interface {
-		On(event string, resolver SocketResolver)
+	IConnection interface {
+		OnMessage(onMessage func(message Message))
+		OnError(onError func(err error))
+		OnClose(onClose func())
+		Send(mt int, data []byte)
+		JSON(mess interface{})
+		On(event string, resolver EventResolver)
 		Emit(event string, data ...interface{})
-		Open(onOpen func(addr string))
-		Close(onClose func(err error))
+		Room(func(resolver WebSocketResolver)) *Connection
 	}
-	Socket struct {
-		conn   			*Connection
-		events 			map[string]*SocketResolver
-		onOpen			func(addr string)
-		onClose 		func(err error)
+	Connection struct {
+		ExtendedConnection 	*websocket.Conn
+		RoomPath 			string
+		events				EventHub
+		onMessage 			func(message Message)
+		onError				func(err error)
+		onClose 			func()
+	}
+
+	Message struct {
+		Type int
+		Data []byte
 	}
 
 	EventMessage struct {
-		Event 	string 		`json:"event"`
-		Payload interface{} `json:"payload"`
+		Room 	string		`json:"room"`
+		Event 	string		`json:"event"`
+		Payload	interface{}	`json:"payload"`
 	}
 
-	SocketResolver func(data interface{})
-)
-
-type (
-	IConnection interface {
-		Send(messageType int, message []byte)
-		JSON(json interface{})
-	}
-	Connection struct {
-		Conn 		*websocket.Conn
-		Message 	chan *Message
-		Open		chan string
-		Close		chan error
-		CloseError 	chan error
-		UnexpectedCloseError chan error
-
-		CloseErrorCodes		 		[]int
-		UnexpectedCloseErrorCodes 	[]int
-	}
-
-	IMessage interface {
-	}
-	Message struct {
-		Type 	int
-		Value 	[]byte
-	}
+	EventResolver 	func(data interface{})
+	EventHub 		map[string]map[string]*EventResolver
 )
 
 // logger.go

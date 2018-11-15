@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
@@ -39,7 +40,7 @@ func defaultOnError(err error)  {
 
 func defaultOnStart(addr string)  {
 	MainLogger.Info("Your server is running on " + addr)
-	println(winter_logo)
+	fmt.Println(winter_logo)
 }
 
 func defaultOnShutdown(signal string)  {
@@ -88,6 +89,7 @@ func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {
 
 	go s.start(useTLS, certPath, keyPath)
 
+	s.onStart(s.Addr)
 	s.onShutdown((<-stop).String())
 
 	ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
@@ -96,7 +98,6 @@ func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {
 }
 
 func (s *Server) start(useTLS bool, certPath, keyPath string) {
-	s.onStart(s.Addr)
 	if useTLS {
 		if err := s.NativeServer.ListenAndServeTLS(certPath, keyPath); err != nil {
 			s.onError(err)
