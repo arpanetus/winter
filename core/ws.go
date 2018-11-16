@@ -13,7 +13,7 @@ func NewWebSocket(resolver WebSocketResolver, upgrader ...*websocket.Upgrader) *
 	}
 
 	return &WebSocket{
-		upgrader: NewUpgrader(defaultUpgrader),
+		upgrader: newUpgrader(defaultUpgrader),
 		resolver: resolver,
 		connection: &Connection{
 			RoomPath: main_room_path,
@@ -38,13 +38,13 @@ func NewWebSocketClient(url string, headers http.Header, onOpen func(conn *Conne
 		return
 	}
 
-	ws := NewWebSocket(func(conn *Connection) {}, NewUpgrader(defaultUpgrader))
+	ws := NewWebSocket(func(conn *Connection) {}, newUpgrader(defaultUpgrader))
 	ws.Headers = headers
 	onOpen(ws.newDialerConnection(conn))
 	ws.dial()
 }
 
-func NewUpgrader(upgrader *websocket.Upgrader) *websocket.Upgrader {
+func newUpgrader(upgrader *websocket.Upgrader) *websocket.Upgrader {
 	upgrader.Error = func(w http.ResponseWriter, r *http.Request, status int, reason error) {
 		SendResponse(NewResponse(status, reason.Error()))(w, r)
 	}
