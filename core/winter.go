@@ -45,6 +45,9 @@ var (
 	RequestLogger 		= NewLogger("request")
 	RouterLogger 		= NewLogger("router")
 	WebSocketLogger 	= NewLogger("ws")
+
+	docEnabled			= false
+	docPath				= ""
 )
 
 // server.go
@@ -57,6 +60,8 @@ type (
 		OnStart(onStart func(addr string))
 		OnError(onErr func(err error))
 		OnShutdown(onShutdown func(signal string))
+
+		EnableDoc(docPath string)
 	}
 	Server struct {
 		*Router
@@ -113,6 +118,11 @@ type (
 	SimpleRouter struct {
 		*Router
 		Init func(r *Router)
+	}
+
+	IRouterConfig interface {
+	}
+	RouterConfig struct {
 	}
 )
 

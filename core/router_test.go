@@ -68,3 +68,29 @@ func TestRouter_SetHandler(t *testing.T) {
 
 	server.NativeServer.Shutdown(nil)
 }
+
+func TestRouterDoc(t *testing.T)  {
+	addr := "localhost:5060"
+	reqAddr := "http://" + addr
+	server := startServer(addr)
+
+	server.EnableDoc("/@doc")
+
+	server.Set("/api", NewRouter(func(r *Router) {
+		r.Doc(NewDoc("Main API router"))
+
+		r.Get("/users", Sender(NewSuccessResponse([]struct{
+			name string
+			email string
+		}{
+			{
+				"alex",
+				"alex@mail.com",
+			},
+		}))).Doc(NewDoc("Returns registered users"))
+	}))
+
+	time.Sleep(time.Second)
+
+	server.NativeServer.Shutdown()
+}
