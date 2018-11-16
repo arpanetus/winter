@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
@@ -39,7 +40,7 @@ func defaultOnError(err error)  {
 
 func defaultOnStart(addr string)  {
 	MainLogger.Info("Your server is running on " + addr)
-	println(winter_logo)
+	fmt.Println(winter_logo)
 }
 
 func defaultOnShutdown(signal string)  {

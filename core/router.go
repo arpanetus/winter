@@ -54,7 +54,7 @@ func (r *Router) Handle(path string, resolver Resolver, methods ...string) {
 }
 
 func (r *Router) HandleWebSocket(path string, ws *WebSocket) {
-	r.mux.HandleFunc(path, ws.resolver)
+	r.mux.HandleFunc(path, ws.handler)
 }
 
 func (r *Router) Use(middlewareResolver MiddlewareResolver) {

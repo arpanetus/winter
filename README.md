@@ -1,5 +1,5 @@
 # Winter Framework
-Winter is framework made for developing scalable web applications.
+Winter is a framework made for developing scalable web applications.
 
 # Other libraries
 This framework uses other libraries such as:
@@ -24,12 +24,12 @@ server.Start()
 
 Creating new routers:
 ```
-// You need to create new struct that extends Router
+// You need to create a new struct that extends Router
 type SuperRouter struct {
     *core.Router
 }
 
-// and implement Init method. It'll execute when you "Set" router
+// and implement the Init method. It'll execute when you "Set" router
 func (s *SuperRouter) Init() {
     // Sender(json interface{}) is just an utils function to fast response with json
     s.All("/", core.Sender("Works gud"))
@@ -42,7 +42,7 @@ func main() {
 }
 ```
 
-Creating router more simple way:
+Creating router with more simple way:
 ```
 var superRouter = core.NewRouter(func(r *core.Router) {
     r.All("/", core.Sender("Simple Router")))
