@@ -11,7 +11,7 @@ var (
 
 	SocketServer = core.NewWebSocket(func(conn *core.Connection) {
 		conn.OnMessage(func(message core.Message) {
-			logServer.Info("Every new message will execute this")
+			logServer.Info("Every new message will execute this func")
 		})
 
 		conn.On("token", func(data interface{}) {

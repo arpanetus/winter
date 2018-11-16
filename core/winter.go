@@ -198,7 +198,7 @@ type (
 		JSON(mess interface{})
 		On(event string, resolver EventResolver)
 		Emit(event string, data ...interface{})
-		Room(func(resolver WebSocketResolver)) *Connection
+		Room(name string, resolver ...WebSocketResolver) *Connection
 	}
 	Connection struct {
 		ExtendedConnection 	*websocket.Conn

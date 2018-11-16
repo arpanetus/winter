@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/steplems/winter/core"
 	"github.com/steplems/winter/examples/multiproto/ws"
+	"time"
 )
 
 var (
@@ -15,9 +16,10 @@ func main() {
 	server.GracefulShutdown = true
 	server.HandleWebSocket("/ws", ws.SocketServer)
 
-	server.OnStart(func(addr string) {
+	go func() {
+		time.Sleep(time.Second * 3)
 		core.NewWebSocketClient("ws://" + addr + "/ws", nil, ws.SocketClient)
-	})
+	}()
 
 	server.Start()
 }
