@@ -31,6 +31,8 @@ const (
 
 	main_room_path	= "main"
 
+	shutdown_timeout = time.Second * 2
+
 	winter_logo = " __     __     __     __   __     ______   ______     ______   \n" +
 		"/\\ \\  _ \\ \\   /\\ \\   /\\ \"-.\\ \\   /\\__  _\\ /\\  ___\\   /\\  == \\  \n" +
 		"\\ \\ \\/ \".\\ \\  \\ \\ \\  \\ \\ \\-.  \\  \\/_/\\ \\/ \\ \\  __\\   \\ \\  __<  \n" +
@@ -63,6 +65,8 @@ type (
 
 		Debug bool
 		GracefulShutdown bool
+
+		ShutdownTimeout time.Duration
 
 		Headers ServerHeaders
 		CORS ServerCORSHeaders
@@ -183,7 +187,7 @@ type (
 	}
 	WebSocket struct {
 		Headers	 	http.Header
-		upgrader 	websocket.Upgrader
+		upgrader 	*websocket.Upgrader
 		resolver	WebSocketResolver
 		connection  *Connection
 	}
