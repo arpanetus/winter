@@ -28,21 +28,23 @@ func NewServer(addr string) *Server {
 				map[string]string{},
 			},
 		},
-		onError: func(err error) {
-			MainLogger.Err(err)
-		},
-		onStart: func(addr string) {
-			fmt.Println(winter_logo)
-			MainLogger.Info("Your server is running on " + addr)
-		},
-		onShutdown: func(err error) {
-			if err != nil {
-				MainLogger.Err("Server shutdown with error", err)
-				return
-			}
-			MainLogger.Warn("Server shutdown")
-		},
+		onError: defaultOnError,
+		onStart: defaultOnStart,
+		onShutdown: defaultOnShutdown,
 	}
+}
+
+func defaultOnError(err error)  {
+	MainLogger.Err("Server closed with error:", err)
+}
+
+func defaultOnStart(addr string)  {
+	MainLogger.Info("Your server is running on " + addr)
+	fmt.Println(winter_logo)
+}
+
+func defaultOnShutdown(signal string)  {
+	MainLogger.Warn("Server is shutting down with signal:", signal)
 }
 
 func (s *Server) OnStart(onStart func(addr string)) {
@@ -53,7 +55,7 @@ func (s *Server) OnError(onErr func(err error)) {
 	s.onError = onErr
 }
 
-func (s *Server) OnShutdown(onShutdown func(err error)) {
+func (s *Server) OnShutdown(onShutdown func(signal string)) {
 	s.onShutdown = onShutdown
 }
 
@@ -77,17 +79,21 @@ func (s *Server) StartTLS(certPath string, keyPath string) {
 	}
 }
 
+func (s *Server) SetRootRouter(router interface{}) {
+	s.Set("", router)
+}
+
 func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 
 	go s.start(useTLS, certPath, keyPath)
 
-	<-stop
+	s.onShutdown((<-stop).String())
 
 	ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
 
-	s.onShutdown(s.NativeServer.Shutdown(ctx))
+	s.NativeServer.Shutdown(ctx)
 }
 
 func (s *Server) start(useTLS bool, certPath, keyPath string) {

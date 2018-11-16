@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/json"
+	"net/http"
 	"time"
 )
 
@@ -22,5 +24,12 @@ func Sender(json interface{}) Resolver {
 	return func(ctx *Context) Response {
 		ctx.JSON(json)
 		return NullResponse()
+	}
+}
+
+func SendResponse(response Response) func(res http.ResponseWriter, req *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(response.Status)
+		json.NewEncoder(res).Encode(response)
 	}
 }
