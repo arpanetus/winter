@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 	"reflect"
@@ -9,15 +8,16 @@ import (
 )
 
 func NewRouter(init func(r *Router)) interface{} {
-	return &struct {
-		*Router
-		Init func(r *Router)
-	}{Init: init}
+	return &SimpleRouter{Init: init}
 }
 
 func NewCoreRouter() *Router {
+	router := mux.NewRouter()
+	router.MethodNotAllowedHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusMethodNotAllowed))))
+	router.NotFoundHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusNotFound))))
+
 	return &Router{
-		mux: mux.NewRouter(),
+		mux: router,
 		Errors: NewErrorMap(),
 	}
 }
@@ -53,6 +53,10 @@ func (r *Router) Handle(path string, resolver Resolver, methods ...string) {
 	}
 }
 
+func (r *Router) HandleWebSocket(path string, ws *WebSocket) {
+	r.mux.HandleFunc(path, ws.handler)
+}
+
 func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 	r.mux.Use(func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -64,8 +68,7 @@ func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 			if response.Status == http.StatusContinue {
 				handler.ServeHTTP(res, req)
 			} else {
-				res.WriteHeader(response.Status)
-				json.NewEncoder(res).Encode(response)
+				SendResponse(response)(res, req)
 			}
 		})
 	})
@@ -111,8 +114,7 @@ func (r *Router) resolver(resolver Resolver) func(res http.ResponseWriter, req *
 		response := resolver(r.getContext(res, req, profiler))
 
 		if response != (Response{}) {
-			res.WriteHeader(response.Status)
-			json.NewEncoder(res).Encode(response)
+			SendResponse(response)(res, req)
 		}
 	}
 }

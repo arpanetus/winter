@@ -3,6 +3,7 @@ package core
 import (
 	"bufio"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"os"
 	"time"
@@ -28,6 +29,8 @@ const (
 
 	bad_os = "windows"
 
+	main_room_path	= "main"
+
 	winter_logo = " __     __     __     __   __     ______   ______     ______   \n" +
 		"/\\ \\  _ \\ \\   /\\ \\   /\\ \"-.\\ \\   /\\__  _\\ /\\  ___\\   /\\  == \\  \n" +
 		"\\ \\ \\/ \".\\ \\  \\ \\ \\  \\ \\ \\-.  \\  \\/_/\\ \\/ \\ \\  __\\   \\ \\  __<  \n" +
@@ -36,9 +39,10 @@ const (
 )
 
 var (
-	MainLogger = NewLogger("main")
-	RequestLogger = NewLogger("request")
-	RouterLogger = NewLogger("router")
+	MainLogger 			= NewLogger("main")
+	RequestLogger 		= NewLogger("request")
+	RouterLogger 		= NewLogger("router")
+	WebSocketLogger 	= NewLogger("ws")
 )
 
 // server.go
@@ -46,10 +50,11 @@ type (
 	IServer interface {
 		Start()
 		StartTLS(certPath, keyPath string)
+		SetRootRouter(router interface{})
 
 		OnStart(onStart func(addr string))
 		OnError(onErr func(err error))
-		OnShutdown(onShutdown func(err error))
+		OnShutdown(onShutdown func(signal string))
 	}
 	Server struct {
 		*Router
@@ -66,10 +71,7 @@ type (
 
 		onStart func(addr string)
 		onError func(err error)
-		onShutdown func(err error)
-	}
-
-	ServerConfig struct {
+		onShutdown func(signal string)
 	}
 
 	ServerHeaders struct {
@@ -95,12 +97,18 @@ type (
 		Post(path string, resolver Resolver)
 		Delete(path string, resolver Resolver)
 		Handle(path string, resolver Resolver, methods ...string)
+		HandleWebSocket(path string, ws *WebSocket)
 
 		Use(resolver MiddlewareResolver)
 	}
 	Router struct {
 		mux *mux.Router
 		Errors *ErrorMap
+	}
+
+	SimpleRouter struct {
+		*Router
+		Init func(r *Router)
 	}
 )
 
@@ -110,12 +118,12 @@ type (
 		Send(msg []byte)
 		JSON(msg interface{})
 		Status(code int) *Context
-		SendError(err *Error)
 
 		GetParams() map[string]string
 		GetParam(key string) (string, bool)
 		GetBody(body interface{}) error
 
+		SendError(err *Error)
 		SendSuccess(message interface{})
 		SendResponse(status int, message interface{})
 	}
@@ -164,6 +172,56 @@ type (
 		Set(code int, err *Error)
 	}
 	ErrorMap map[int]*Error
+)
+
+
+// ws.go
+type (
+	IWebSocket interface {
+		GetResolver() Resolver
+		GetHandlerFunc() http.HandlerFunc
+	}
+	WebSocket struct {
+		Headers	 	http.Header
+		upgrader 	websocket.Upgrader
+		resolver	WebSocketResolver
+		connection  *Connection
+	}
+
+	WebSocketResolver func(conn *Connection)
+
+	IConnection interface {
+		OnMessage(onMessage func(message Message))
+		OnError(onError func(err error))
+		OnClose(onClose func())
+		Send(mt int, data []byte)
+		JSON(mess interface{})
+		On(event string, resolver EventResolver)
+		Emit(event string, data ...interface{})
+		Room(name string, resolver ...WebSocketResolver) *Connection
+	}
+	Connection struct {
+		ExtendedConnection 	*websocket.Conn
+		RoomPath 			string
+		events				EventHub
+		onMessage 			func(message Message)
+		onError				func(err error)
+		onClose 			func()
+	}
+
+	Message struct {
+		Type int
+		Data []byte
+	}
+
+	EventMessage struct {
+		Room 	string		`json:"room"`
+		Event 	string		`json:"event"`
+		Payload	interface{}	`json:"payload"`
+	}
+
+	EventResolver 	func(data interface{})
+	EventHub 		map[string]map[string]*EventResolver
 )
 
 // logger.go

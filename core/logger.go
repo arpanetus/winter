@@ -4,22 +4,51 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"runtime"
 	"strconv"
 	"time"
 )
 
+var (
+	longestLogger = 0
+)
+
 func NewLogger(name string) *Logger {
-	return &Logger{
+	nameLen := len(name)
+	if nameLen > longestLogger {
+		longestLogger = nameLen
+	}
+
+	logger := &Logger{
 		Name: name,
 		writer: fmt.Print,
 		writerf: fmt.Printf,
 		writerln: fmt.Println,
 	}
+
+	return logger
 }
 
-func (l *Logger) LogIntoFile(filePath string, ) *Logger {
-	logFile, err := os.Create(filePath + "-" + time.Now().Format("2006-01-02") + ".log")
+func LogDefaultToFiles(filePath string, prefix ...string) {
+	MainLogger.LogIntoFile(filePath, prefix...)
+	RequestLogger.LogIntoFile(filePath, prefix...)
+	RouterLogger.LogIntoFile(filePath, prefix...)
+	WebSocketLogger.LogIntoFile(filePath, prefix...)
+}
+
+func (l *Logger) LogIntoFile(filePath string, prefix ...string) *Logger {
+	defaultPrefix := "log"
+	if len(prefix) > 0 {
+		defaultPrefix = prefix[0]
+	}
+
+	logFilePath := defaultPrefix + "-" + l.Name + "-" + time.Now().Format("2006-01-02") + ".log"
+	fullPath := path.Join(filePath, logFilePath)
+
+	l.Info("Logging into file:", fullPath)
+
+	logFile, err := os.Create(fullPath)
 	if err != nil {
 		l.Err("Could not create new log file, logging into terminal")
 		return l
@@ -89,7 +118,7 @@ func (l *Logger) Logf(format string, mess ...interface{}) {
 func (l *Logger) log(tag string, tagColor []int, format bool, formatString string, mess ...interface{}) {
 	logTime := time.Now().Format("2006/01/02 15:04:05")
 	ansiRequired := runtime.GOOS != bad_os && !l.logIntoFile
-	loggerName := l.Name + " |  "
+	loggerName := l.Name + l.getFillerSpaces() + " |  "
 
 	if ansiRequired {
 		logTime = l.ansi(36) + logTime + ansi_clear
@@ -132,4 +161,13 @@ func (l *Logger) ansi(codes ...int) string {
 	ansiSpaceCode = ansiSpaceCode + ansi_suffix
 
 	return ansiSpaceCode
+}
+
+func (l *Logger) getFillerSpaces() string {
+	spaces := ""
+	count := longestLogger - len(l.Name)
+	for i := 0; i < count; i++ {
+		spaces = spaces + " "
+	}
+	return spaces
 }
