@@ -6,14 +6,14 @@ import (
 	"net/http"
 )
 
-func NewWebSocket(resolver WebSocketResolver, upgrader ...websocket.Upgrader) *WebSocket {
-	defaultUpgrader := websocket.Upgrader{}
+func NewWebSocket(resolver WebSocketResolver, upgrader ...*websocket.Upgrader) *WebSocket {
+	defaultUpgrader := &websocket.Upgrader{}
 	if len(upgrader) > 0 {
 		defaultUpgrader = upgrader[0]
 	}
 
 	return &WebSocket{
-		upgrader: defaultUpgrader,
+		upgrader: NewUpgrader(defaultUpgrader),
 		resolver: resolver,
 		connection: &Connection{
 			RoomPath: main_room_path,
@@ -26,8 +26,8 @@ func NewWebSocket(resolver WebSocketResolver, upgrader ...websocket.Upgrader) *W
 	}
 }
 
-func NewWebSocketClient(url string, headers http.Header, onOpen func(conn *Connection), upgrader ...websocket.Upgrader) {
-	defaultUpgrader := websocket.Upgrader{}
+func NewWebSocketClient(url string, headers http.Header, onOpen func(conn *Connection), upgrader ...*websocket.Upgrader) {
+	defaultUpgrader := &websocket.Upgrader{}
 	if len(upgrader) > 0 {
 		defaultUpgrader = upgrader[0]
 	}
@@ -38,10 +38,17 @@ func NewWebSocketClient(url string, headers http.Header, onOpen func(conn *Conne
 		return
 	}
 
-	ws := NewWebSocket(func(conn *Connection) {}, defaultUpgrader)
+	ws := NewWebSocket(func(conn *Connection) {}, NewUpgrader(defaultUpgrader))
 	ws.Headers = headers
 	onOpen(ws.newDialerConnection(conn))
 	ws.dial()
+}
+
+func NewUpgrader(upgrader *websocket.Upgrader) *websocket.Upgrader {
+	upgrader.Error = func(w http.ResponseWriter, r *http.Request, status int, reason error) {
+		SendResponse(NewResponse(status, reason.Error()))(w, r)
+	}
+	return upgrader
 }
 
 func (w *WebSocket) GetResolver() Resolver {

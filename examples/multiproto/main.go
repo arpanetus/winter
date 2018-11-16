@@ -16,10 +16,7 @@ func main() {
 	server.GracefulShutdown = true
 	server.HandleWebSocket("/ws", ws.SocketServer)
 
-	go func() {
-		time.Sleep(time.Second * 3)
-		core.NewWebSocketClient("ws://" + addr + "/ws", nil, ws.SocketClient)
-	}()
-
-	server.Start()
+	go server.Start()
+	time.Sleep(time.Second)
+	core.NewWebSocketClient("ws://" + addr + "/ws", nil, ws.SocketClient)
 }

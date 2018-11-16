@@ -17,6 +17,7 @@ func NewServer(addr string) *Server {
 		Addr: addr,
 		Debug: false,
 		GracefulShutdown: false,
+		ShutdownTimeout: shutdown_timeout,
 		NativeServer: &http.Server{
 			Addr: addr,
 		},
@@ -91,9 +92,10 @@ func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {
 
 	s.onShutdown((<-stop).String())
 
-	ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
-
+	ctx, _ := context.WithTimeout(context.Background(), shutdown_timeout)
 	s.NativeServer.Shutdown(ctx)
+	time.Sleep(shutdown_timeout)
+	os.Exit(0)
 }
 
 func (s *Server) start(useTLS bool, certPath, keyPath string) {

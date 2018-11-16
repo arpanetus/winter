@@ -20,9 +20,14 @@ func TrackTime() func() time.Duration {
 	}
 }
 
-func Sender(json interface{}) Resolver {
+func Sender(json interface{}, status ...int) Resolver {
 	return func(ctx *Context) Response {
-		ctx.JSON(json)
+		defaultStatus := http.StatusOK
+		if len(status) > 0 {
+			defaultStatus = status[0]
+		}
+
+		ctx.Status(defaultStatus).JSON(json)
 		return NullResponse()
 	}
 }
