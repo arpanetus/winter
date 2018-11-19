@@ -84,6 +84,15 @@ func (s *Server) SetRootRouter(router interface{}) {
 	s.Set("", router)
 }
 
+func (s *Server) EnableDoc(path string) {
+	docEnabled = true
+	docPath = path
+	s.Set(path, NewRouter(s.docRouter))
+}
+
+func (s *Server) docRouter(r *Router) {
+}
+
 func (s *Server) gracefulShutdown(useTLS bool, certPath, keyPath string) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)

@@ -11,14 +11,22 @@ func NewRouter(init func(r *Router)) interface{} {
 	return &SimpleRouter{Init: init}
 }
 
-func NewCoreRouter() *Router {
-	router := mux.NewRouter()
-	router.MethodNotAllowedHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusMethodNotAllowed))))
-	router.NotFoundHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusNotFound))))
+func NewCoreRouter(bindMux ...*mux.Router) *Router {
+	defaultRouter := mux.NewRouter()
+	if len(bindMux) > 0 {
+		defaultRouter = bindMux[0]
+	}
+	defaultRouter.MethodNotAllowedHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusMethodNotAllowed))))
+	defaultRouter.NotFoundHandler = http.HandlerFunc(SendResponse(NewErrorResponse(HTTPErrors.Get(http.StatusNotFound))))
 
 	return &Router{
-		mux: router,
+		mux: defaultRouter,
 		Errors: NewErrorMap(),
+	}
+}
+
+func NewDoc(explanation string) *Doc {
+	return &Doc{
 	}
 }
 
@@ -26,30 +34,32 @@ func (r *Router) GetHandler() *mux.Router {
 	return r.mux
 }
 
-func (r *Router) Get(path string, resolver Resolver) {
-	r.Handle(path, resolver, http.MethodGet)
+func (r *Router) Get(path string, resolver Resolver) *RouterConfig {
+	return r.Handle(path, resolver, http.MethodGet)
 }
 
-func (r *Router) Put(path string, resolver Resolver) {
-	r.Handle(path, resolver, http.MethodPut)
+func (r *Router) Put(path string, resolver Resolver) *RouterConfig {
+	return r.Handle(path, resolver, http.MethodPut)
 }
 
-func (r *Router) Post(path string, resolver Resolver) {
-	r.Handle(path, resolver, http.MethodPost)
+func (r *Router) Post(path string, resolver Resolver) *RouterConfig {
+	return r.Handle(path, resolver, http.MethodPost)
 }
 
-func (r *Router) Delete(path string, resolver Resolver) {
-	r.Handle(path, resolver, http.MethodDelete)
+func (r *Router) Delete(path string, resolver Resolver) *RouterConfig {
+	return r.Handle(path, resolver, http.MethodDelete)
 }
 
-func (r *Router) All(path string, resolver Resolver) {
-	r.Handle(path, resolver)
+func (r *Router) All(path string, resolver Resolver) *RouterConfig {
+	return r.Handle(path, resolver)
 }
 
-func (r *Router) Handle(path string, resolver Resolver, methods ...string) {
+func (r *Router) Handle(path string, resolver Resolver, methods ...string) *RouterConfig {
 	handlerFunc := r.mux.HandleFunc(path, r.resolver(resolver))
 	if len(methods) > 0 {
 		handlerFunc.Methods(methods...)
+	}
+	return &RouterConfig{
 	}
 }
 
@@ -76,7 +86,7 @@ func (r *Router) Use(middlewareResolver MiddlewareResolver) {
 
 func (r *Router) Set(path string, router interface{}) {
 	routerPrefix := r.mux.PathPrefix(path).Subrouter()
-	newPrefixedRouter := &Router{routerPrefix, NewErrorMap()}
+	newPrefixedRouter := NewCoreRouter(routerPrefix)
 
 	routerValue := reflect.ValueOf(router).Elem()
 	field := routerValue.FieldByName("Router")
@@ -132,4 +142,7 @@ func (r *Router) getMiddlewareContext(res http.ResponseWriter, req *http.Request
 		Context: r.getContext(res, req, executionTracker),
 		handler: handler,
 	}
+}
+
+func (r *RouterConfig) Doc() {
 }

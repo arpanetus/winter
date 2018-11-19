@@ -92,5 +92,19 @@ func TestRouterDoc(t *testing.T)  {
 
 	time.Sleep(time.Second)
 
-	server.NativeServer.Shutdown()
+	server.NativeServer.Shutdown(nil)
+
+//	/@doc/api/
+//	{
+//		"http://localhost:5060/api/users": "GET - Returns registered users"
+//		"http://localhost:5060/api/users/new/{id}": {
+//			"explanation": "Creates new user",x
+//			"params": {
+//				"id": "string - user id"
+//			},
+//			"body": {
+//				"name": "string - username"
+//			}
+//		}
+//	}
 }

@@ -100,17 +100,18 @@ type (
 		Set(path string, router interface{})
 		SetHandler(path string, handler http.Handler)
 
-		All(path string, resolver Resolver)
-		Get(path string, resolver Resolver)
-		Put(path string, resolver Resolver)
-		Post(path string, resolver Resolver)
-		Delete(path string, resolver Resolver)
-		Handle(path string, resolver Resolver, methods ...string)
+		All(path string, resolver Resolver) *RouterConfig
+		Get(path string, resolver Resolver) *RouterConfig
+		Put(path string, resolver Resolver) *RouterConfig
+		Post(path string, resolver Resolver) *RouterConfig
+		Delete(path string, resolver Resolver) *RouterConfig
+		Handle(path string, resolver Resolver, methods ...string) *RouterConfig
 		HandleWebSocket(path string, ws *WebSocket)
 
 		Use(resolver MiddlewareResolver)
 	}
 	Router struct {
+		*RouterConfig
 		mux *mux.Router
 		Errors *ErrorMap
 	}
@@ -121,8 +122,22 @@ type (
 	}
 
 	IRouterConfig interface {
+		Doc(doc *Doc)
+		DocPath(path string, doc *Doc)
 	}
 	RouterConfig struct {
+		routerTree map[string]interface{}
+	}
+)
+
+type (
+	Doc struct {
+		Protocol 	string					`json:"protocol,omitempty"`
+		Method 		string 					`json:"method,omitempty"`
+		Link 		string 					`json:"omitempty"`
+		Params 		map[string]string 		`json:"params,omitempty"`
+		Body		map[string]interface{}	`json:"body,omitempty"`
+		handlerDoc 	bool
 	}
 )
 
