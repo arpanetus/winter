@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 )
 
@@ -32,6 +33,14 @@ const (
 	main_room_path	= "main"
 
 	shutdown_timeout = time.Second * 2
+
+	winter_guard_tag 	= "winter"
+	option_unrequired	= "omitempty"
+	option_extends		= "extends"
+	option_max			= "max"
+	option_min			= "min"
+	option_contains		= "contains"
+	option_deprecate	= "deprecate"
 
 	winter_logo = " __     __     __     __   __     ______   ______     ______   \n" +
 		"/\\ \\  _ \\ \\   /\\ \\   /\\ \"-.\\ \\   /\\__  _\\ /\\  ___\\   /\\  == \\  \n" +
@@ -100,20 +109,21 @@ type (
 		Set(path string, router interface{})
 		SetHandler(path string, handler http.Handler)
 
-		All(path string, resolver Resolver) *RouterConfig
-		Get(path string, resolver Resolver) *RouterConfig
-		Put(path string, resolver Resolver) *RouterConfig
-		Post(path string, resolver Resolver) *RouterConfig
-		Delete(path string, resolver Resolver) *RouterConfig
-		Handle(path string, resolver Resolver, methods ...string) *RouterConfig
+		All(path string, resolver Resolver) IRouterConfig
+		Get(path string, resolver Resolver) IRouterConfig
+		Put(path string, resolver Resolver) IRouterConfig
+		Post(path string, resolver Resolver) IRouterConfig
+		Delete(path string, resolver Resolver) IRouterConfig
+		Handle(path string, resolver Resolver, methods ...string) IRouterConfig
 		HandleWebSocket(path string, ws *WebSocket)
 
 		Use(resolver MiddlewareResolver)
 	}
 	Router struct {
 		*RouterConfig
-		mux *mux.Router
-		Errors *ErrorMap
+		Errors 		*ErrorMap
+		mux 		*mux.Router
+		routerTree 	map[string]interface{}
 	}
 
 	SimpleRouter struct {
@@ -122,11 +132,24 @@ type (
 	}
 
 	IRouterConfig interface {
-		Doc(doc *Doc)
-		DocPath(path string, doc *Doc)
+		Doc(explanation string) IRouterConfig
+		DocPath(path string) IRouterConfig
+		Guard(config interface{}, passIfError ...bool) IRouterConfig
 	}
 	RouterConfig struct {
-		routerTree map[string]interface{}
+		guard 			interface{}
+		guardConfig		GuardConfigMap
+		passIfError 	bool
+	}
+
+	GuardConfigMap map[string]GuardConfig
+
+	GuardConfig struct {
+		FieldName 		string
+		Type			reflect.Kind
+		Omitempty		bool
+		Options			map[string]interface{}
+		Node 			GuardConfigMap
 	}
 )
 
@@ -151,15 +174,17 @@ type (
 		GetParams() map[string]string
 		GetParam(key string) (string, bool)
 		GetBody(body interface{}) error
+		GetGuardBody() (interface{}, error)
 
 		SendError(err *Error)
 		SendSuccess(message interface{})
 		SendResponse(status int, message interface{})
 	}
 	Context struct {
-		Response http.ResponseWriter
-		Request *http.Request
-		TrackTime func() time.Duration
+		guard		interface{}
+		Response 	http.ResponseWriter
+		Request 	*http.Request
+		TrackTime 	func() time.Duration
 	}
 
 	IMiddlewareContext interface {

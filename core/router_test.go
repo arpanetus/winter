@@ -1,6 +1,8 @@
 package core
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -69,42 +71,61 @@ func TestRouter_SetHandler(t *testing.T) {
 	server.NativeServer.Shutdown(nil)
 }
 
-func TestRouterDoc(t *testing.T)  {
+func TestRouter_Guard(t *testing.T) {
 	addr := "localhost:5060"
 	reqAddr := "http://" + addr
 	server := startServer(addr)
 
-	server.EnableDoc("/@doc")
+	//server.EnableDoc("/@doc")
 
+	type User struct {
+		Email string `json:"email" winter:"max: 40, min: 6, contains: '@'~'.'"`
+		Password string `json:"password" winter:"extends: Email, contains: ''"`
+		Username string `json:"username" winter:"extends: Email, max: 50"`
+	}
+	
 	server.Set("/api", NewRouter(func(r *Router) {
-		r.Doc(NewDoc("Main API router"))
+		r.Post("/new", func(ctx *Context) Response {
+			body, err := ctx.GetGuardBody()
+			if err != nil {
+				t.Log(err.Error())
+				return NewErrorResponse(NewError(http.StatusBadRequest, err.Error()))
+			}
 
-		r.Get("/users", Sender(NewSuccessResponse([]struct{
-			name string
-			email string
-		}{
-			{
-				"alex",
-				"alex@mail.com",
-			},
-		}))).Doc(NewDoc("Returns registered users"))
+			t.Log(body)
+
+			return NewSuccessResponse(body)
+		}).Guard(User{}).Doc("Creates new user")
 	}))
 
 	time.Sleep(time.Second)
 
-	server.NativeServer.Shutdown(nil)
+	b, _ := json.Marshal(User{
+		"shit@gmail.com",
+		"55114411aAZ",
+		"username",
+	})
 
-//	/@doc/api/
-//	{
-//		"http://localhost:5060/api/users": "GET - Returns registered users"
-//		"http://localhost:5060/api/users/new/{id}": {
-//			"explanation": "Creates new user",x
-//			"params": {
-//				"id": "string - user id"
-//			},
-//			"body": {
-//				"name": "string - username"
-//			}
-//		}
-//	}
+	res, err := http.Post(reqAddr + "/api/new", "application/json", bytes.NewBuffer(b))
+	if err != nil {
+		t.Error("Error trying to post user to guarded route:", err)
+	}
+
+	t.Log(res)
+
+	//	/@doc/api/
+	//	{
+	//		"http://localhost:5060/api/users": "GET - Returns registered users"
+	//		"http://localhost:5060/api/users/new/{id}": {
+	//			"explanation": "Creates new user",x
+	//			"params": {
+	//				"id": "string - user id"
+	//			},
+	//			"body": {
+	//				"name": "string - username"
+	//			}
+	//		}
+	//	}
+
+	server.NativeServer.Shutdown(nil)
 }

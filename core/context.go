@@ -100,6 +100,14 @@ func (c *Context) GetBody(body interface{}) error {
 	return nil
 }
 
+func (c *Context) GetGuardBody() (interface{}, error) {
+	switch c.guard.(type) {
+	case error:
+		return nil, c.guard.(error)
+	default:
+		return c.guard, nil
+	}
+}
 
 func (m *MiddlewareContext) Next() {
 	m.handler.ServeHTTP(m.Response, m.Request)
