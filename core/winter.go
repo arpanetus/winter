@@ -138,18 +138,18 @@ type (
 	}
 	RouterConfig struct {
 		guard 			interface{}
-		guardConfig		GuardConfigMap
+		guardConfig		*GuardConfigMap
 		passIfError 	bool
 	}
 
-	GuardConfigMap map[string]GuardConfig
+	GuardConfigMap map[string]*GuardConfig
 
 	GuardConfig struct {
 		FieldName 		string
 		Type			reflect.Kind
 		Omitempty		bool
 		Options			map[string]interface{}
-		Node 			GuardConfigMap
+		Node 			*GuardConfigMap
 	}
 )
 

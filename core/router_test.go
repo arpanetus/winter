@@ -78,12 +78,17 @@ func TestRouter_Guard(t *testing.T) {
 
 	//server.EnableDoc("/@doc")
 
+	type Contacts struct {
+		List []string `json:"list" winter:"max: 25"`
+	}
+
 	type User struct {
 		Email string `json:"email" winter:"max: 40, min: 6, contains: '@'~'.'"`
 		Password string `json:"password" winter:"extends: Email, contains: ''"`
-		Username string `json:"username" winter:"extends: Email, max: 50"`
+		Username string `json:"username" winter:"max: 50"`
+		Contacts Contacts `json:"contacts" winter:"omitempty"`
 	}
-	
+
 	server.Set("/api", NewRouter(func(r *Router) {
 		r.Post("/new", func(ctx *Context) Response {
 			body, err := ctx.GetGuardBody()
@@ -95,7 +100,7 @@ func TestRouter_Guard(t *testing.T) {
 			t.Log(body)
 
 			return NewSuccessResponse(body)
-		}).Guard(User{}).Doc("Creates new user")
+		}).Guard(User{}, true).Doc("Creates new user")
 	}))
 
 	time.Sleep(time.Second)
@@ -104,6 +109,9 @@ func TestRouter_Guard(t *testing.T) {
 		"shit@gmail.com",
 		"55114411aAZ",
 		"username",
+		Contacts{
+			[]string{"Godddmaaaamn"},
+		},
 	})
 
 	res, err := http.Post(reqAddr + "/api/new", "application/json", bytes.NewBuffer(b))
