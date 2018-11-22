@@ -57,7 +57,18 @@ server.Set("/api", superRouter)
 # TODO
 * Documentation
 * Winter CLI
-* MultipleProtocol/RPC Usage (WS, Twirp, gRPC, HTTP/2)
+    - Init command - Init creates new project with given template name. If the default template is not found, then it finds it in the github repository
+    - Run command - Run compiles plugins at the working dir (os.Getwd()) into tmp dir (.winter(?)) and runs app with given config in required winter.go file (watch core.App)
+    - Build command - Build compiles app with given config in required winter.go file at the working dir plugins into one executable
+    - Create Template Repositories
+        - MVC Monolit
+        - RPC Service
+        - Micro Services
+        - FastHTTP with WebSocket
+* Server
+    - FastHTTP server
+    - C/C++ kore/proxygen servers (?)
+* MultipleProtocol/RPC Usage (WS, Twirp, gRPC, HTTP/2(?))
 
 # License
 MIT

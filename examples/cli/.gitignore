@@ -1,0 +1,8 @@
+# IDEs
+.ide
+.idea
+.vscode
+.project
+
+# Winter TMP
+.winter

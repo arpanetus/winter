@@ -253,3 +253,24 @@ type (
 		writerln func(a ...interface{}) (n int, err error)
 	}
 )
+
+type (
+	App struct {
+		// Address of the server where the application will start
+		Addr 				string
+
+		// Path to
+		KeyPath, CertPath	string
+
+		GracefulShutdown 	bool
+		Debug 				bool
+		ShutdownTimeout 	time.Duration
+		Headers 			ServerHeaders
+		CORS 				ServerCORSHeaders
+
+		LogIntoFile string
+
+		AutoRun	bool
+		DevMode bool
+	}
+)
