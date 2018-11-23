@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -232,15 +233,29 @@ type (
 type (
 	ILogger interface {
 		Log(mess ...interface{})
+		Flog(writer io.Writer, mess ...interface{})
 		Logf(format string, mess ...interface{})
+		Flogf(writer io.Writer, format string, mess ...interface{})
+
 		Err(mess ...interface{})
+		Ferr(writer io.Writer, mess ...interface{})
 		Errf(format string, mess ...interface{})
+		Ferrf(writer io.Writer, format string, mess ...interface{})
+
 		Info(mess ...interface{})
+		Finfo(writer io.Writer, mess ...interface{})
 		Infof(format string, mess ...interface{})
+		Finfof(writer io.Writer, format string, mess ...interface{})
+
 		Warn(mess ...interface{})
+		Fwarn(writer io.Writer, mess ...interface{})
 		Warnf(format string, mess ...interface{})
+		Fwarnf(writer io.Writer, format string, mess ...interface{})
+
 		Note(mess ...interface{})
+		Fnote(writer io.Writer, mess ...interface{})
 		Notef(format string, mess ...interface{})
+		Fnotef(writer io.Writer, format string, mess ...interface{})
 	}
 	Logger struct {
 		Name string
