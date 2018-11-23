@@ -22,7 +22,7 @@ func NewCoreRouter() *Router {
 	}
 }
 
-func (r *Router) GetHandler() *mux.Router {
+func (r *Router) GetHandler() http.Handler {
 	return r.mux
 }
 

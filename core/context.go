@@ -37,6 +37,7 @@ func (c *Context) Send(msg []byte) {
 }
 
 func (c *Context) JSON(mess interface{}) {
+	c.Header("Content-Type", "application/json")
 	json.NewEncoder(c.Response).Encode(mess)
 }
 

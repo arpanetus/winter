@@ -35,6 +35,7 @@ func Sender(json interface{}, status ...int) Resolver {
 func SendResponse(response Response) func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(response.Status)
+		res.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(res).Encode(response)
 	}
 }
