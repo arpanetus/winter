@@ -9,7 +9,7 @@ import (
 )
 
 func createWinterDir(winterDir string) error {
-	err := os.Mkdir(winterDir, os.ModeDir)
+	err := exec.Command("mkdir", winterDir).Run()
 	if err != nil {
 		log.Err("Couldn't create temp .winter directory:", err)
 		return err
@@ -21,7 +21,7 @@ func updateWinterDir(winterDir string) error {
 	if _, err := os.Stat(winterDir); os.IsNotExist(err) {
 		return createWinterDir(winterDir)
 	} else {
-		err = os.Remove(winterDir)
+		err = os.RemoveAll(winterDir)
 		if err != nil {
 			log.Err("Couldn't remove temp .winter directory:", err)
 			return err
@@ -46,6 +46,8 @@ func winterRun()  {
 		return
 	}
 
+	log.Info(winterFileSo)
+	log.Info(winterFile)
 	err = exec.Command("go", "build", "-buildmode=plugin", "-o", winterFileSo, winterFile).Run()
 	if err != nil {
 		log.Err("Couldn't build plugin from file winter.go:", err)
@@ -64,6 +66,6 @@ func winterRun()  {
 		return
 	}
 
-	config := app.(core.App)
+	config := app.(*core.App)
 	log.Info(config)
 }
