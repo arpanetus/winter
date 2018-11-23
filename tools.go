@@ -75,7 +75,8 @@ func buildCommand(args []string) {
 		log.Err("Not suitable for Windows, sorry :(")
 		return
 	}
-	log.Info("Work in progress")
+
+	winterBuild()
 }
 
 func runCommand(args []string) {
@@ -83,6 +84,5 @@ func runCommand(args []string) {
 		log.Err("Not suitable for Windows, sorry :(")
 		return
 	}
-
-	winterRun()
+	log.Info("Work in progress")
 }

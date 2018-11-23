@@ -30,7 +30,7 @@ func updateWinterDir(winterDir string) error {
 	}
 }
 
-func winterRun()  {
+func winterBuild()  {
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Err("Can not get execution path:", err)
