@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"os/signal"
@@ -111,7 +110,7 @@ func (s *Server) start(useTLS bool, certPath, keyPath string) {
 	}
 }
 
-func (s *Server) processRouterByDefault() *mux.Router {
+func (s *Server) processRouterByDefault() http.Handler {
 	if len(s.CORS.headerMap) > 0 {
 		s.Use(s.corsMiddleware)
 	}
