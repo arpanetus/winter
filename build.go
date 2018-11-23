@@ -33,7 +33,7 @@ func updateWinterDir(winterDir string) error {
 func winterBuild()  {
 	pwd, err := os.Getwd()
 	if err != nil {
-		log.Err("Can not get execution path:", err)
+		log.Err("Couldn't get execution path:", err)
 		return
 	}
 
@@ -56,16 +56,25 @@ func winterBuild()  {
 
 	winterPlugin, err := plugin.Open(winterFileSo)
 	if err != nil {
-		log.Err("Can not open winter.go file:", err)
+		log.Err("Couldn't open winter.go file:", err)
 		return
 	}
 
 	app, err := winterPlugin.Lookup(cli_app_config)
 	if err != nil {
-		log.Err("Can not get App config:", err)
+		log.Err("Couldn't get App config:", err)
 		return
 	}
 
-	config := app.(*core.App)
-	log.Info(config)
+	createMainFile(app.(*core.App), winterDir)
+}
+
+func createMainFile(config *core.App, buildPath string) {
+	file, err := os.Create(path.Join(buildPath, "main.go"))
+	if err != nil {
+		log.Err("Couldn't create main.go file:", err)
+		return
+	}
+
+	file.Write()
 }

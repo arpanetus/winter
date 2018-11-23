@@ -8,7 +8,7 @@ import (
 const (
 	cli_config_file = "winter.go"
 	cli_config_file_so = "winter.so"
-	cli_config_dir = ".winter"
+	cli_config_dir = "build"
 	cli_app_config = "App"
 )
 
@@ -75,7 +75,6 @@ func buildCommand(args []string) {
 		log.Err("Not suitable for Windows, sorry :(")
 		return
 	}
-
 	winterBuild()
 }
 

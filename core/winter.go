@@ -271,10 +271,8 @@ type (
 
 type (
 	App struct {
-		// Address of the server where the application will start
 		Addr 				string
 
-		// Path to
 		KeyPath, CertPath	string
 
 		GracefulShutdown 	bool
@@ -287,5 +285,7 @@ type (
 
 		AutoRun	bool
 		DevMode bool
+
+		ControllersPath string
 	}
 )
