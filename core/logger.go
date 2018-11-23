@@ -3,6 +3,7 @@ package core
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"runtime"
@@ -56,23 +57,62 @@ func (l *Logger) LogIntoFile(filePath string, prefix ...string) *Logger {
 
 	l.fileWriter = bufio.NewWriter(logFile)
 
-	l.writer = func(a ...interface{}) (n int, err error) {
-		num, err := fmt.Fprint(l.fileWriter, a...)
-		return num, err
-	}
-	l.writerf = func(format string, a ...interface{}) (n int, err error) {
-		num, err := fmt.Fprintf(l.fileWriter, format, a...)
-		return num, err
-	}
-	l.writerln = func(a ...interface{}) (n int, err error) {
-		num, err := fmt.Fprintln(l.fileWriter, a...)
-		return num, err
-	}
+	l.overrideWithWriter(l.fileWriter)
 
 	l.logFile = logFile
 
 	l.logIntoFile = true
 	return l
+}
+
+func (l *Logger) Finfo(writer io.Writer, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_info, []int{36, 1}, false, "", mess...)
+}
+
+func (l *Logger) Finfof(writer io.Writer, format string, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_info, []int{36, 1}, true, format, mess...)
+}
+
+func (l *Logger) Fwarn(writer io.Writer, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_warn, []int{33, 1}, false, "", mess...)
+}
+
+func (l *Logger) Fwarnf(writer io.Writer, format string, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_warn, []int{33, 1}, true, format, mess...)
+}
+
+func (l *Logger) Ferr(writer io.Writer, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_error, []int{31, 1}, false, "", mess...)
+}
+
+func (l *Logger) Ferrf(writer io.Writer, format string, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_error, []int{31, 1}, true, format, mess...)
+}
+
+func (l *Logger) Fnote(writer io.Writer, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_note, []int{34, 1}, false, "", mess...)
+}
+
+func (l *Logger) Fnotef(writer io.Writer, format string, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log(tag_note, []int{34, 1}, true, format, mess...)
+}
+
+func (l *Logger) Flog(writer io.Writer, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log("", []int{}, false, "", mess...)
+}
+
+func (l *Logger) Flogf(writer io.Writer, format string, mess ...interface{}) {
+	l.overrideWithWriter(writer)
+	l.log("", []int{}, true, format, mess...)
 }
 
 func (l *Logger) Info(mess ...interface{}) {
@@ -170,4 +210,16 @@ func (l *Logger) getFillerSpaces() string {
 		spaces = spaces + " "
 	}
 	return spaces
+}
+
+func (l *Logger) overrideWithWriter(writer io.Writer) {
+	l.writer = func(a ...interface{}) (n int, err error) {
+		return fmt.Fprint(writer, a...)
+	}
+	l.writerln = func(a ...interface{}) (n int, err error) {
+		return fmt.Fprintln(writer, a...)
+	}
+	l.writerf = func(format string, a ...interface{}) (n int, err error) {
+		return fmt.Fprintf(writer, format, a...)
+	}
 }
