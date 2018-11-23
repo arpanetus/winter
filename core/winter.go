@@ -91,7 +91,7 @@ type (
 // router.go
 type (
 	IRouter interface {
-		GetHandler() *mux.Router
+		GetHandler() http.Handler
 
 		Set(path string, router interface{})
 		SetHandler(path string, handler http.Handler)
