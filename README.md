@@ -1,15 +1,15 @@
 # Winter Framework
-Winter is a framework made for developing scalable web applications.
+Winter is a framework made in order to rapidly develope scalable web applications.
 
-# Other libraries
+# Third-party libraries
 This framework uses other libraries such as:
 * [gorilla/mux](https://github.com/gorilla/mux)
 * [gorilla/websocket](https://github.com/gorilla/websocket)
 
-***Many thanks to the creator of these libs!***
+***Many thanks to the creators of these libs!***
 
 # Examples
-You can find some examples in /winter/examples dir
+You can find some examples in `/winter/examples` dir
 
 # Usage
 Simple usage:
